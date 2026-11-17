@@ -180,7 +180,7 @@
     <img class="login-logo" src="lab-icon.png" alt="Checklist de Soporte">
     <h1>Checklist de Soporte</h1>
     <p class="login-sub">Ingresa con tu usuario para ver y registrar equipos.</p>
-    <p class="login-sub" style="font-size:11px;color:#999">Versión 2.5.8</p>
+    <p class="login-sub" style="font-size:11px;color:#999">Versión 2.5.9</p>
     <div id="loginBox">
       <form id="loginForm">
         <div class="field"><label>Usuario o correo</label><input id="loginEmail" type="text" placeholder="usuario o tu@correo.com" autocomplete="username"></div>
@@ -418,7 +418,7 @@
   <div class="card">
     <b>Acerca de</b>
     <div class="line">App: Checklist de Soporte</div>
-    <div class="line">Versión: 2.5.8</div>
+    <div class="line">Versión: 2.5.9</div>
     <div class="line" id="focusDiag">Foco: — · Elemento activo: —</div>
     <div class="line">Contacto: <a href="mailto:gerardo.cruzhz@linux.com">gerardo.cruzhz@linux.com</a></div>
     <div class="sub">© Gerardo Cruz Hernandez</div>
@@ -1248,6 +1248,8 @@ function renderDetectados() {
       (detLine ? '<div class="sub">' + detLine + '</div>' : '') +
       '<div class="actions"><button class="btn-green" data-det-use="' + esc(d.id) + '">Usar este equipo</button>' +
       '<button class="btn-dark" data-det-save="' + esc(d.id) + '">💾 Guardar para después</button>' +
+      '<button class="btn-dark" data-det-wa="' + esc(d.id) + '">📲 Compartir por WhatsApp</button>' +
+      '<button class="btn-dark" data-det-mail="' + esc(d.id) + '">✉️ Compartir por correo</button>' +
       '<button class="btn-ghost" data-det-del="' + esc(d.id) + '">Descartar</button></div></div>';
   }).join('');
   refreshDetectarBtn();
@@ -2301,6 +2303,55 @@ function shareAvanceMail(p) {
   var asunto = 'Avance — ' + (p.equipo.marca || 'Equipo') + ' ' + (p.equipo.modelo || '');
   window.location.href = 'mailto:?subject=' + encodeURIComponent(asunto) + '&body=' + encodeURIComponent(avanceText(p));
 }
+// Texto para compartir un equipo detectado (259): solo las
+// características que el detector realmente encontró; los campos vacíos
+// se omiten (no se imprime '—' ni 'sin datos'). Funciona aunque el
+// equipo aún no se haya guardado como preparación: es solo el documento
+// detectado. Reutiliza los helpers de formato (hardware, redes, AnyDesk,
+// versiones, políticas, impresora, usuario de sistemas).
+function detShareText(d) {
+  d = d || {};
+  var det = d.detalles || {};
+  var ver = d.versiones || {};
+  var lines = ['🖥️ Checklist de Soporte — Equipo detectado', ''];
+  var titulo = ((d.marca || '') + ' ' + (d.modelo || '')).trim();
+  lines.push(titulo || 'Equipo detectado');
+  if (d.tipo) lines.push('Tipo: ' + d.tipo);
+  if (d.serie) lines.push('Serie: ' + d.serie);
+  if (d.hostname) lines.push('Hostname: ' + d.hostname);
+  var hw = hardwareLine(d);
+  if (hw) lines.push(hw);
+  var rd = redesLine(d);
+  if (rd) lines.push(rd);
+  var ad = anydeskLine(d);
+  if (ad) lines.push(ad);
+  var vl = versionesLine(ver);
+  if (vl) lines.push(vl);
+  if (d.so && !ver.so) lines.push('SO: ' + d.so);
+  var av = ver.antivirus || d.antivirus || det.antivirus || '';
+  if (av && vl.indexOf('Antivirus:') === -1) lines.push('Antivirus: ' + av);
+  var imp = d.impresora || det.impresora || '';
+  if (imp) lines.push('Impresora: ' + imp);
+  var pol = d.politicas || det.politicas || null;
+  if (pol) lines.push(politicasText(pol));
+  var us = (typeof d.usuarioSistemas !== 'undefined') ? d.usuarioSistemas : det.usuarioSistemas;
+  if (typeof us === 'boolean') lines.push('Usuario de sistemas: ' + (us ? 'Sí' : 'No'));
+  var esc2 = escritorioLine(d);
+  if (esc2) lines.push(esc2);
+  var osf = osFuenteLine(d);
+  if (osf) lines.push(osf);
+  var detL = detLineFor(d);
+  if (detL) lines.push(detL);
+  if (d.detectadoEn) lines.push('Detectado: ' + fmtDate(d.detectadoEn) + (d.detectadoPor ? ' por ' + d.detectadoPor : ''));
+  else if (d.detectadoPor) lines.push('Detectado por: ' + d.detectadoPor);
+  return lines.join('\n');
+}
+// Compartir un equipo detectado por correo: asunto con hostname o modelo
+// y el mismo texto en el cuerpo (mismo patrón mailto: de shareAvanceMail).
+function detShareMail(d) {
+  var asunto = 'Equipo detectado: ' + (d.hostname || d.modelo || 'Equipo');
+  window.location.href = 'mailto:?subject=' + encodeURIComponent(asunto) + '&body=' + encodeURIComponent(detShareText(d));
+}
 function shareText(texto) {
   if (navigator.share) {
     navigator.share({ title: 'Checklist de Soporte', text: texto }).catch(function () {});
@@ -3180,8 +3231,19 @@ document.getElementById('detList').addEventListener('click', function (e) {
   var use = t.closest('[data-det-use]');
   var del = t.closest('[data-det-del]');
   var sav = t.closest('[data-det-save]');
-  if (!use && !del && !sav) return;
-  var id = (use || del || sav).getAttribute(use ? 'data-det-use' : del ? 'data-det-del' : 'data-det-save');
+  var wa = t.closest('[data-det-wa]');
+  var mail = t.closest('[data-det-mail]');
+  if (!use && !del && !sav && !wa && !mail) return;
+  var el = use || del || sav || wa || mail;
+  var id = el.getAttribute(use ? 'data-det-use' : del ? 'data-det-del' : sav ? 'data-det-save' : wa ? 'data-det-wa' : 'data-det-mail');
+  // (259) Compartir características: no marca el equipo como usado ni
+  // guarda nada; solo abre WhatsApp o el correo con el texto.
+  if (wa || mail) {
+    var dd = detectados.find(function (x) { return String(x.id) === String(id); });
+    if (!dd) return;
+    if (wa) shareText(detShareText(dd)); else detShareMail(dd);
+    return;
+  }
   // Guardar para después (238b): crea el borrador en En preparación y
   // marca la detección como usada (sale del panel, igual que 'Usar este
   // equipo'). Si el borrador se elimina después, no vuelve al panel:
@@ -4168,7 +4230,9 @@ function renderMantDetectados() {
       '<div class="sub">' + esc((d.marca || '') + ' ' + (d.modelo || '')) + ' · Serie: ' + esc(d.serie || '—') + '</div>' +
       (hwLine ? '<div class="sub">' + esc(hwLine) + '</div>' : '') +
       '<div class="sub">Detectado ' + timeAgo(d.detectadoEn) + (d.detectadoPor ? ' por ' + esc(d.detectadoPor) : '') + '</div>' +
-            '<div class="actions"><button class="btn-green" data-mant-det-use="' + esc(d.id) + '">🔧 Dar mantenimiento a este equipo</button></div></div>';
+            '<div class="actions"><button class="btn-green" data-mant-det-use="' + esc(d.id) + '">🔧 Dar mantenimiento a este equipo</button>' +
+            '<button class="btn-dark" data-mant-det-wa="' + esc(d.id) + '">📲 Compartir por WhatsApp</button>' +
+            '<button class="btn-dark" data-mant-det-mail="' + esc(d.id) + '">✉️ Compartir por correo</button></div></div>';
   }).join('');
 }
 function renderMantCheckboxes() {
@@ -5174,7 +5238,16 @@ document.getElementById('btnMantDetectar').addEventListener('click', function ()
 });
 document.getElementById('mantDetList').addEventListener('click', function (e) {
   var b = e.target.closest('[data-mant-det-use]');
-  if (b) mantUseDetectado(b.getAttribute('data-mant-det-use'));
+  if (b) { mantUseDetectado(b.getAttribute('data-mant-det-use')); return; }
+  // (259) Compartir características del equipo detectado (igual que en
+  // Por preparar): no marca el equipo como usado ni guarda nada.
+  var wa = e.target.closest('[data-mant-det-wa]');
+  var mail = e.target.closest('[data-mant-det-mail]');
+  if (!wa && !mail) return;
+  var el = wa || mail;
+  var dd = detectados.find(function (x) { return String(x.id) === String(el.getAttribute(wa ? 'data-mant-det-wa' : 'data-mant-det-mail')); });
+  if (!dd) return;
+  if (wa) shareText(detShareText(dd)); else detShareMail(dd);
 });
 document.getElementById('mantAdminFilter').addEventListener('change', function (e) { mantAdminViewUid = e.target.value; renderMant(); });
 document.getElementById('btnMantCrear').addEventListener('click', function () { mantCrearOrden(); });
@@ -5760,7 +5833,7 @@ document.getElementById('btnEuGuardar').addEventListener('click', function () {
   });
 });
 document.getElementById('btnReportar').addEventListener('click', function () {
-  window.location.href = 'mailto:gerardo.cruzhz@linux.com?subject=' + encodeURIComponent('Reporte de problema - Checklist de Soporte 258') + '&body=' + encodeURIComponent('Describe el problema:\n\n\nVersión de la app: 258');
+  window.location.href = 'mailto:gerardo.cruzhz@linux.com?subject=' + encodeURIComponent('Reporte de problema - Checklist de Soporte 259') + '&body=' + encodeURIComponent('Describe el problema:\n\n\nVersión de la app: 259');
 });
 
 boot();

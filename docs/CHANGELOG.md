@@ -1,9 +1,38 @@
 # Changelog — Checklist de Soporte (nube)
 
-Resumen por versión, 2.0.0 → 2.5.8. Fuentes: el historial registrado
+Resumen por versión, 2.0.0 → 2.5.9. Fuentes: el historial registrado
 del proyecto (memoria 2026-11-12 a 2026-11-17) y las series de tests
 (`tests/test20*.js`). Las versiones 2.0.1–2.0.4 no tienen registro y
 no se documentan con supuestos.
+
+## 2.5.9 — 2026-11-17
+
+- **Compartir un equipo detectado por WhatsApp y por correo**: cada
+  tarjeta de «Equipos detectados» (en Por preparar y en Mantenimientos)
+  tiene dos botones nuevos junto a los de siempre: «📲 Compartir por
+  WhatsApp» y «✉️ Compartir por correo». Comparten las características
+  detectadas del equipo en texto claro y compacto, sin guardarlo como
+  preparación: hostname, marca, modelo, serie, CPU, RAM, disco + tipo,
+  sistema operativo + versión, IP + tipo y redes, AnyDesk (id y alias),
+  antivirus + versión, agente ESET, Chrome, impresora, políticas
+  (cambio de contraseña, longitud mínima, bloqueo, usuario sistemas) y
+  fecha de detección + quién lo detectó. Los campos vacíos se omiten
+  (no se listan con «-» ni «sin datos»).
+- **Mismo patrón que el compartir de preparación**: WhatsApp abre
+  `wa.me/?text=` sin número fijo (en escritorio `main.js` lo manda al
+  navegador del sistema con `setWindowOpenHandler`); correo abre
+  `mailto:` con asunto «Equipo detectado: \<hostname o modelo\>» y el
+  mismo texto en el cuerpo. Compartir no marca el equipo como usado ni
+  llama a la nube.
+- Funciones nuevas en `www/index.html`: `detShareText(d)` (construye
+  el texto reutilizando `hardwareLine`, `redesLine`, `anydeskLine`,
+  `versionesLine`, `politicasText`, `escritorioLine`, `osFuenteLine`,
+  `detLineFor`, `fmtDate`) y `detShareMail(d)`; listeners de `#detList`
+  (`data-det-wa` / `data-det-mail`) y de `#mantDetList`
+  (`data-mant-det-wa` / `data-mant-det-mail`).
+- Bundle de Firebase sin cambios (`57fa245b…`).
+- Tests `test20259.js`: 823 true / 0 false; tests del detector 473
+  pasaron / 0 fallaron; smoke-259 VEREDICTO OK.
 
 ## 2.5.8 — 2026-11-17
 

@@ -19,10 +19,11 @@ teléfonos del equipo mediante Firebase (Firestore), con caché offline.
 > menciona aquí solo como referencia histórica, no se documenta en detalle.
 > Todo lo de este README describe la app en la nube (2.x).
 
-> **Últimos cambios (2.5.8):** botón «Actualizaciones de Windows» en Por
-> preparar (solo escritorio): verifica y cambia la contraseña del
-> usuario local de Windows «sistemas»; las contraseñas nunca salen de
-> la PC y el cambio pide permiso de administrador. Historial completo
+> **Últimos cambios (2.5.9):** en «Equipos detectados» (Por preparar y
+> Mantenimientos) cada equipo trae «📲 Compartir por WhatsApp» y «✉️
+> Compartir por correo» con todas sus características detectadas
+> (hardware, redes, AnyDesk, versiones, políticas, impresora); compartir
+> no lo marca como usado. Historial completo
 > en [docs/CHANGELOG.md](docs/CHANGELOG.md).
 
 ## Qué hace
