@@ -1,0 +1,7 @@
+# Copia este archivo a gradle.properties y ajusta lo necesario.
+# gradle.properties NO se versiona: puede llevar credenciales de proxy; nunca lo commitees.
+# Si trabajas detrás de un proxy, agrega aquí tus systemProp.http/https.proxyHost,
+# proxyPort, proxyUser y proxyPassword (sin commitearlas).
+org.gradle.jvmargs=-Xmx2048m
+android.useAndroidX=true
+android.enableJetifier=true

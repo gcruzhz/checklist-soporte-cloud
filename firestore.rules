@@ -1,0 +1,163 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function userDocExists() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function isActive() {
+      return isAuth() && userDocExists() && userDoc().data.activo == true;
+    }
+
+    function isAdmin() {
+      return isActive() && userDoc().data.rol == 'admin';
+    }
+
+    function isInitialized() {
+      return exists(/databases/$(database)/documents/config/admin)
+        && get(/databases/$(database)/documents/config/admin).data.initialized == true;
+    }
+
+    // Equipos de renta: cualquier usuario activo puede leer y escribir.
+    match /renta/{id} {
+      allow read, write: if isActive();
+    }
+
+    // Equipos en preparación (Por preparar): se sincronizan entre todos
+    // los teléfonos; cualquier usuario activo puede leer y escribir.
+    match /preparations/{id} {
+      allow read, write: if isActive();
+    }
+
+    // Equipos detectados: el detector de escritorio los reporta y los
+    // teléfonos los leen para usarlos o descartarlos.
+    match /detectados/{id} {
+      allow read, write: if isActive();
+    }
+
+    // Chat individual (1 a 1): solo los dos participantes pueden leer y
+    // enviar mensajes; el mensaje debe llevar su propio uid como remitente
+    // y a los dos participantes. Tampoco guarda historial: los mensajes
+    // de más de 24 horas los puede borrar cualquier usuario activo.
+    match /dm/{id} {
+      allow read: if isActive() && request.auth.uid in resource.data.participants;
+      allow create: if isActive() && request.resource.data.from == request.auth.uid
+        && request.auth.uid in request.resource.data.participants
+        && request.resource.data.texto is string;
+      allow update: if false;
+      allow delete: if isAdmin()
+        || (isActive() && resource.data.createdAt < request.time - duration.value(24, 'h'));
+    }
+
+    // Usuarios: lectura para activos; creación solo en bootstrap
+    // (primer admin, antes de inicializar) o por un admin;
+    // actualización solo admin; nunca se borran.
+    match /users/{uid} {
+      allow read: if isActive();
+      allow create: if isAuth()
+        && ((request.auth.uid == uid && !isInitialized()) || isAdmin());
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Flag de inicialización: lectura pública (la app debe saber si ya
+    // existe un admin antes de pedir login); creación solo una vez por un
+    // usuario autenticado; nunca se actualiza ni se borra.
+    // Nombres de usuario: lectura pública (para entrar con usuario en vez
+    // de correo); creación solo por un admin; nunca se actualizan ni borran.
+    match /usernames/{name} {
+      allow read: if true;
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Intentos de acceso: lectura pública (el login revisa el bloqueo sin
+    // sesión); cualquiera puede registrar un intento fallido; solo el
+    // admin puede borrar (desbloquear) un registro.
+    match /loginAttempts/{uid} {
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if isAdmin();
+    }
+
+    // Presencia: cada usuario activo registra su última actividad (latido)
+    // y lee la de los demás; solo puede escribir su propio registro.
+    match /presence/{uid} {
+      allow read: if isActive();
+      allow create, update: if isActive() && request.auth.uid == uid;
+      allow delete: if isActive() && request.auth.uid == uid;
+    }
+
+    // Chat interno: cualquier usuario activo puede leer y enviar mensajes;
+    // el mensaje debe llevar su propio uid y un texto. El chat no guarda
+    // historial: los mensajes de más de 24 horas los puede borrar
+    // cualquier usuario activo (la app los limpia sola); el admin puede
+    // borrar cualquier mensaje.
+    match /chat/{id} {
+      allow read: if isActive();
+      allow create: if isActive() && request.resource.data.uid == request.auth.uid
+        && request.resource.data.texto is string;
+      allow update: if false;
+      allow delete: if isAdmin()
+        || (isActive() && resource.data.createdAt < request.time - duration.value(24, 'h'));
+    }
+
+    match /config/admin {
+      allow read: if true;
+      allow create: if isAuth() && !isInitialized();
+      allow update, delete: if false;
+    }
+
+    // Clave de la IA (Gemini): la guarda el admin una vez y la leen los
+    // usuarios activos para preguntarle a la IA desde sus teléfonos.
+    match /config/ai {
+      allow read: if isActive();
+      allow create, update: if isAdmin();
+      allow delete: if false;
+    }
+
+    // Mantenimientos preventivos (2.5.0): órdenes de servicio con folio.
+    // Un usuario normal solo ve los suyos (tecnicoUid propio); el admin
+    // ve todos. La lectura por id es pública para que la página de firma
+    // (sin sesión) pueda mostrar la orden: el id del documento es el
+    // secreto — cualquiera que lo conozca puede leer esa orden y firmarla.
+    // Crear: usuario activo con su propio tecnicoUid. Actualizar: admin o
+    // propio, o la firma pública que solo toca 'firma' y 'estado' (a
+    // 'firmada', con nombre, área y firma no vacíos). Borrar: admin o propio.
+    match /mantenimientos/{id} {
+      allow list: if isActive() && (isAdmin() || resource.data.tecnicoUid == request.auth.uid);
+      allow get: if true;
+      allow create: if isActive() && request.resource.data.tecnicoUid == request.auth.uid;
+      allow update: if (isActive() && (isAdmin() || resource.data.tecnicoUid == request.auth.uid))
+        || (request.resource.data.diff(resource.data).changedKeys().hasOnly(['firma', 'estado'])
+          && request.resource.data.estado == 'firmada'
+          && request.resource.data.firma.nombre is string && request.resource.data.firma.nombre.size() > 0
+          && request.resource.data.firma.area is string && request.resource.data.firma.area.size() > 0
+          && request.resource.data.firma.firma is string && request.resource.data.firma.firma.size() > 0);
+      allow delete: if isActive() && (isAdmin() || resource.data.tecnicoUid == request.auth.uid);
+    }
+
+    // Folios de órdenes de servicio (2.5.0): config/folios.siguiente es el
+    // próximo folio a asignar (empieza en 1). Leer: usuarios activos.
+    // Crear: usuario activo con siguiente entero. Actualizar: solo subir
+    // el contador de uno en uno.
+    match /config/folios {
+      allow read: if isActive();
+      allow create: if isActive() && request.resource.data.siguiente is int;
+      allow update: if isActive()
+        && request.resource.data.diff(resource.data).changedKeys().hasOnly(['siguiente'])
+        && request.resource.data.siguiente == resource.data.siguiente + 1;
+      allow delete: if false;
+    }
+  }
+}

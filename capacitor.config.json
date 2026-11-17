@@ -1,0 +1,13 @@
+{
+  "appId": "mx.gerardo.checklistsoporte",
+  "appName": "Checklist de Soporte",
+  "webDir": "www",
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0,
+      "launchAutoHide": true,
+      "backgroundColor": "#ffffff",
+      "showSpinner": false
+    }
+  }
+}

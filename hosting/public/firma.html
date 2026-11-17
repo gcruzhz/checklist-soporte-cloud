@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Firma de servicio — Checklist de Soporte</title>
+<style>
+  :root{
+    --teal:#0f766e; --teal-dark:#0b5e57; --teal-light:#e6f4f1;
+    --orange:#ea7a1f; --ink:#1f2937; --muted:#6b7280; --line:#d1d5db;
+    --danger:#b91c1c; --danger-bg:#fef2f2; --ok:#15803d; --ok-bg:#f0fdf4;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  body{margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif; background:#f3f4f6; color:var(--ink);}
+  .wrap{max-width:560px; margin:0 auto; padding:16px 14px 48px;}
+  header{background:var(--teal); color:#fff; border-radius:14px; padding:18px 18px 14px; margin-bottom:14px;}
+  header h1{margin:0 0 4px; font-size:20px; line-height:1.25;}
+  header p{margin:0; font-size:13px; opacity:.92;}
+  .folio{font-size:12px; letter-spacing:.06em; text-transform:uppercase; opacity:.85;}
+  .card{background:#fff; border-radius:14px; padding:16px; margin-bottom:14px; box-shadow:0 1px 3px rgba(0,0,0,.08);}
+  .card h2{margin:0 0 10px; font-size:16px; color:var(--teal-dark);}
+  .row{display:flex; justify-content:space-between; gap:12px; padding:7px 0; border-bottom:1px solid #eef2f2; font-size:14px;}
+  .row:last-child{border-bottom:0;}
+  .row .k{color:var(--muted); flex:0 0 42%;}
+  .row .v{flex:1; text-align:right; font-weight:600; word-break:break-word;}
+  label{display:block; font-size:14px; font-weight:600; margin:14px 0 5px;}
+  label .req{color:var(--danger);}
+  label .opt{color:var(--muted); font-weight:400; font-size:12px;}
+  input[type=text], textarea{
+    width:100%; font-size:16px; padding:11px 12px; border:1.5px solid var(--line);
+    border-radius:10px; outline:none; background:#fff; color:var(--ink);
+  }
+  input[type=text]:focus, textarea:focus{border-color:var(--teal);}
+  input.invalid, textarea.invalid{border-color:var(--danger); background:var(--danger-bg);}
+  textarea{resize:vertical; min-height:76px;}
+  .hint{font-size:12px; color:var(--muted); margin-top:4px;}
+  /* Canvas de firma */
+  .sig-box{border:1.5px solid var(--line); border-radius:10px; background:#fff; overflow:hidden; position:relative;}
+  .sig-box.invalid{border-color:var(--danger); background:var(--danger-bg);}
+  .sig-box canvas{display:block; width:100%; height:180px; touch-action:none; cursor:crosshair;}
+  .sig-placeholder{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    color:#9ca3af; font-size:14px; pointer-events:none; text-align:center; padding:0 20px;
+  }
+  .sig-actions{display:flex; justify-content:flex-end; margin-top:8px;}
+  .btn-ghost{
+    background:#fff; color:var(--teal-dark); border:1.5px solid var(--teal);
+    border-radius:10px; padding:8px 16px; font-size:14px; font-weight:600; cursor:pointer;
+  }
+  /* Satisfacción 0-10 */
+  .scale{display:grid; grid-template-columns:repeat(11,1fr); gap:4px; margin-top:6px;}
+  .scale button{
+    aspect-ratio:1; border:1.5px solid var(--line); background:#fff; border-radius:8px;
+    font-size:14px; font-weight:700; color:var(--ink); cursor:pointer; padding:0;
+  }
+  .scale button.sel-bad{background:#b91c1c; border-color:#b91c1c; color:#fff;}
+  .scale button.sel-mid{background:#d97706; border-color:#d97706; color:#fff;}
+  .scale button.sel-good{background:var(--teal); border-color:var(--teal); color:#fff;}
+  .scale-labels{display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-top:6px;}
+  .scale-labels b{font-weight:700;}
+  .scale-labels .bad{color:#b91c1c;} .scale-labels .mid{color:#b45309;} .scale-labels .good{color:var(--teal-dark);}
+  /* Avisos y botones */
+  .alert{display:none; border-radius:10px; padding:12px 14px; font-size:14px; margin-bottom:14px; line-height:1.45;}
+  .alert.show{display:block;}
+  .alert.err{background:var(--danger-bg); color:var(--danger); border:1px solid #fecaca;}
+  .alert.err ul{margin:6px 0 0; padding-left:20px;}
+  .alert.ok{background:var(--ok-bg); color:var(--ok); border:1px solid #bbf7d0;}
+  .btn-primary{
+    width:100%; background:var(--teal); color:#fff; border:0; border-radius:12px;
+    padding:15px; font-size:17px; font-weight:700; cursor:pointer; margin-top:6px;
+  }
+  .btn-primary:disabled{background:#9ca3af; cursor:wait;}
+  .btn-primary.orange{background:var(--orange);}
+  .center{text-align:center;}
+  .loading{color:var(--muted); font-size:14px; padding:28px 0;}
+  .spinner{width:28px; height:28px; border:3px solid var(--teal-light); border-top-color:var(--teal); border-radius:50%; margin:0 auto 10px; animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .sig-img{max-width:100%; border:1px solid var(--line); border-radius:10px; background:#fff;}
+  .foot{font-size:12px; color:var(--muted); text-align:center; margin-top:18px; line-height:1.5;}
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="folio" id="folioTop">Checklist de Soporte</div>
+    <h1>Firma de servicio</h1>
+    <p>Confirma con tu firma que el servicio quedó realizado.</p>
+  </header>
+
+  <!-- Cargando -->
+  <div id="viewLoading" class="card center">
+    <div class="loading"><div class="spinner"></div>Cargando la orden de servicio…</div>
+  </div>
+
+  <!-- Error -->
+  <div id="viewError" class="card hidden">
+    <div class="alert err show" id="errorText"></div>
+    <p class="hint center">Si el enlace te llegó por WhatsApp, ábrelo de nuevo desde el mensaje original. Si el problema continúa, avisa al técnico.</p>
+  </div>
+
+  <!-- Ya firmada -->
+  <div id="viewSigned" class="hidden">
+    <div class="card">
+      <div class="alert ok show">✔ Ya firmaste esta orden. Tu firma quedó registrada, no es necesario firmar de nuevo.</div>
+      <h2>Tu firma registrada</h2>
+      <div id="signedData"></div>
+      <div id="signedImgWrap" style="margin-top:12px;"></div>
+      <div style="margin-top:14px;"><button type="button" class="btn-primary orange" id="btnCerrarSigned">Cerrar</button><p class="hint center hidden" id="closeHintSigned">Ya puedes cerrar esta ventana.</p></div>
+    </div>
+  </div>
+
+  <!-- Formulario -->
+  <div id="viewForm" class="hidden">
+    <div class="card">
+      <h2>Orden de servicio</h2>
+      <div id="orderData"></div>
+    </div>
+
+    <div class="card">
+      <h2>Tu firma</h2>
+      <div id="formAlert" class="alert err" role="alert"></div>
+
+      <form id="signForm" novalidate>
+        <label for="nombre">Nombre <span class="req">*</span></label>
+        <input type="text" id="nombre" autocomplete="name" placeholder="Tu nombre completo">
+        <div class="hint">Nombre de la persona que recibe el servicio.</div>
+
+        <label for="area">Área <span class="req">*</span></label>
+        <input type="text" id="area" autocomplete="off" placeholder="Ej. Ventas, Laboratorio, Recepción">
+
+        <label>Firma <span class="req">*</span></label>
+        <div class="sig-box" id="sigBox">
+          <canvas id="sigCanvas"></canvas>
+          <div class="sig-placeholder" id="sigPlaceholder">Firma aquí con tu dedo</div>
+        </div>
+        <div class="sig-actions">
+          <button type="button" class="btn-ghost" id="btnClear">Limpiar</button>
+        </div>
+
+        <label for="comentarios">Comentarios <span class="opt">(opcional)</span></label>
+        <textarea id="comentarios" placeholder="¿Algo que quieras comentar del servicio?"></textarea>
+
+        <label>¿Qué tan satisfecho quedaste con el servicio? <span class="opt">(opcional)</span></label>
+        <div class="scale" id="scale" role="radiogroup" aria-label="Satisfacción del 0 al 10"></div>
+        <div class="scale-labels">
+          <span class="bad"><b>0–3</b> INACEPTABLE</span>
+          <span class="mid"><b>4–7</b> ACEPTABLE</span>
+          <span class="good"><b>8–10</b> EXCELENTE</span>
+        </div>
+
+        <button type="submit" class="btn-primary" id="btnSubmit">Enviar mi firma</button>
+        <p class="hint center">Los campos marcados con <span style="color:var(--danger); font-weight:700;">*</span> son obligatorios.</p>
+      </form>
+    </div>
+  </div>
+
+  <!-- Confirmación -->
+  <div id="viewDone" class="hidden">
+    <div class="card center">
+      <div class="alert ok show" style="font-size:16px;">✔ Gracias, tu firma quedó registrada.</div>
+      <p style="font-size:14px; color:var(--muted);">El técnico ya puede ver tu confirmación. Puedes cerrar esta página.</p>
+      <div id="doneData" style="text-align:left;"></div>
+      <div style="margin-top:14px;"><button type="button" class="btn-primary orange" id="btnCerrarDone">Cerrar</button><p class="hint center hidden" id="closeHintDone">Ya puedes cerrar esta ventana.</p></div>
+    </div>
+  </div>
+
+  <p class="foot">Checklist de Soporte · Esta página no requiere cuenta ni aplicación.<br>Tu firma solo se usa para confirmar este servicio.</p>
+</div>
+
+<!-- SDK web de Firebase (compat) + config del proyecto -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="./firebase-config.js"></script>
+<script>
+(function(){
+  'use strict';
+
+  var $ = function(id){ return document.getElementById(id); };
+
+  // ---------- Estado ----------
+  var docId = null, docRef = null, db = null;
+  var order = null;           // datos del mantenimiento
+  var satisfaccion = null;    // null = no eligió
+  var firmaDibujada = false;  // ¿el canvas tiene trazo?
+  var enviando = false;
+
+  // ---------- Vistas ----------
+  function show(id){
+    ['viewLoading','viewError','viewSigned','viewForm','viewDone'].forEach(function(v){
+      $(v).classList.toggle('hidden', v !== id);
+    });
+  }
+  function showError(msg){
+    $('errorText').textContent = msg;
+    show('viewError');
+  }
+
+  // ---------- Formato ----------
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function fmtFecha(v){
+    if(!v) return '—';
+    try{
+      var d = null;
+      if(typeof v.toDate === 'function') d = v.toDate();
+      else if(v instanceof Date) d = v;
+      else if(typeof v === 'string'){
+        // 'YYYY-MM-DD' sin hora: no convertir por zona horaria
+        if(/^\d{4}-\d{2}-\d{2}$/.test(v)){
+          var p = v.split('-');
+          d = new Date(+p[0], +p[1]-1, +p[2]);
+        } else d = new Date(v);
+      } else if(typeof v === 'number') d = new Date(v);
+      if(!d || isNaN(d.getTime())) return esc(String(v));
+      return d.toLocaleDateString('es-MX', {day:'2-digit', month:'long', year:'numeric'});
+    }catch(e){ return esc(String(v)); }
+  }
+  function fmtFechaHora(v){
+    if(!v) return '—';
+    try{
+      var d = (typeof v.toDate === 'function') ? v.toDate() : new Date(v);
+      if(isNaN(d.getTime())) return esc(String(v));
+      return d.toLocaleString('es-MX', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
+    }catch(e){ return esc(String(v)); }
+  }
+  function satisfaccionTexto(n){
+    if(n == null) return '—';
+    if(n <= 3) return n + ' / 10 · INACEPTABLE';
+    if(n <= 7) return n + ' / 10 · ACEPTABLE';
+    return n + ' / 10 · EXCELENTE';
+  }
+
+  // ---------- Datos de la orden ----------
+  function renderOrder(o){
+    var eq = o.equipo || {};
+    var equipoTxt = [eq.marca, eq.modelo].filter(Boolean).join(' ');
+    var filas = [
+      ['Folio', o.folio || '—'],
+      ['Empresa', o.empresa || 'Lapi'],
+      ['Técnico', o.tecnico || '—'],
+      ['Caso', o.tituloCaso || o.titulo || '—'],
+      ['Tipo de falla', o.tipoFalla || o.tipo || '—'],
+      ['Equipo', equipoTxt || '—'],
+      ['Serie', eq.serie || '—'],
+      ['Hostname', eq.hostname || '—'],
+      ['Fecha del servicio', fmtFecha(o.fechaServicio)]
+    ];
+    $('folioTop').textContent = 'Checklist de Soporte · Folio ' + (o.folio || '—');
+    $('orderData').innerHTML = filas.map(function(f){
+      return '<div class="row"><span class="k">' + esc(f[0]) + '</span><span class="v">' + esc(f[1]) + '</span></div>';
+    }).join('');
+  }
+
+  function renderSigned(f){
+    var filas = [
+      ['Nombre', f.nombre || '—'],
+      ['Área', f.area || '—'],
+      ['Satisfacción', satisfaccionTexto(f.satisfaccion)],
+      ['Comentarios', f.comentarios || '—'],
+      ['Firmado el', fmtFechaHora(f.firmadoEn)]
+    ];
+    $('signedData').innerHTML = filas.map(function(r){
+      return '<div class="row"><span class="k">' + esc(r[0]) + '</span><span class="v">' + esc(r[1]) + '</span></div>';
+    }).join('');
+    if(f.firma){
+      $('signedImgWrap').innerHTML = '<img class="sig-img" alt="Firma registrada" src="' + esc(f.firma) + '">';
+    } else {
+      $('signedImgWrap').innerHTML = '';
+    }
+  }
+
+  // ---------- Canvas de firma ----------
+  var canvas = $('sigCanvas'), ctx = null, dibujando = false, ultimo = null;
+  function setupCanvas(){
+    var dpr = window.devicePixelRatio || 1;
+    var w = canvas.clientWidth || canvas.parentElement.clientWidth || 300;
+    var h = 180;
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    ctx.lineWidth = 2.2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#111827';
+  }
+  function pos(e){
+    var r = canvas.getBoundingClientRect();
+    var t = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]) || e;
+    return {x: t.clientX - r.left, y: t.clientY - r.top};
+  }
+  function empezar(e){
+    e.preventDefault();
+    dibujando = true;
+    ultimo = pos(e);
+    $('sigPlaceholder').style.display = 'none';
+  }
+  function mover(e){
+    if(!dibujando || !ctx) return;
+    e.preventDefault();
+    var p = pos(e);
+    ctx.beginPath();
+    ctx.moveTo(ultimo.x, ultimo.y);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    ultimo = p;
+    firmaDibujada = true;
+    $('sigBox').classList.remove('invalid');
+  }
+  function terminar(){ dibujando = false; ultimo = null; }
+  function limpiarFirma(){
+    if(ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+    firmaDibujada = false;
+    $('sigPlaceholder').style.display = 'flex';
+    $('sigBox').classList.remove('invalid');
+  }
+  canvas.addEventListener('pointerdown', empezar);
+  canvas.addEventListener('pointermove', mover);
+  canvas.addEventListener('pointerup', terminar);
+  canvas.addEventListener('pointercancel', terminar);
+  canvas.addEventListener('pointerleave', terminar);
+  // Respaldo para navegadores sin Pointer Events
+  canvas.addEventListener('mousedown', function(e){ if(!window.PointerEvent) empezar(e); });
+  canvas.addEventListener('mousemove', function(e){ if(!window.PointerEvent) mover(e); });
+  canvas.addEventListener('mouseup', function(e){ if(!window.PointerEvent) terminar(); });
+  canvas.addEventListener('touchstart', function(e){ if(!window.PointerEvent) empezar(e); }, {passive:false});
+  canvas.addEventListener('touchmove', function(e){ if(!window.PointerEvent) mover(e); }, {passive:false});
+  canvas.addEventListener('touchend', function(e){ if(!window.PointerEvent) terminar(); });
+  $('btnClear').addEventListener('click', limpiarFirma);
+
+  // ---------- Escala de satisfacción ----------
+  var scaleEl = $('scale');
+  for(var i = 0; i <= 10; i++){
+    (function(n){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = n;
+      b.setAttribute('role', 'radio');
+      b.setAttribute('aria-checked', 'false');
+      b.addEventListener('click', function(){
+        satisfaccion = n;
+        var btns = scaleEl.querySelectorAll('button');
+        btns.forEach(function(x, idx){
+          x.classList.remove('sel-bad','sel-mid','sel-good');
+          x.setAttribute('aria-checked', idx === n ? 'true' : 'false');
+        });
+        b.classList.add(n <= 3 ? 'sel-bad' : (n <= 7 ? 'sel-mid' : 'sel-good'));
+      });
+      scaleEl.appendChild(b);
+    })(i);
+  }
+
+  // ---------- Validación (nombre, área y firma son obligatorios) ----------
+  function validar(){
+    var faltantes = [];
+    var nombre = $('nombre').value.trim();
+    var area = $('area').value.trim();
+    $('nombre').classList.toggle('invalid', !nombre);
+    $('area').classList.toggle('invalid', !area);
+    $('sigBox').classList.toggle('invalid', !firmaDibujada);
+    if(!nombre) faltantes.push('Nombre');
+    if(!area) faltantes.push('Área');
+    if(!firmaDibujada) faltantes.push('Firma');
+    var alert = $('formAlert');
+    if(faltantes.length){
+      alert.innerHTML = '<b>Faltan datos obligatorios:</b><ul>' +
+        faltantes.map(function(f){ return '<li>' + esc(f) + '</li>'; }).join('') +
+        '</ul>Completa los campos marcados para poder enviar tu firma.';
+      alert.classList.add('show');
+      if(typeof alert.scrollIntoView === 'function'){
+        alert.scrollIntoView({behavior:'smooth', block:'center'});
+      }
+      return null;
+    }
+    alert.classList.remove('show');
+    alert.innerHTML = '';
+    return {nombre: nombre, area: area};
+  }
+  $('nombre').addEventListener('input', function(){ this.classList.remove('invalid'); });
+  $('area').addEventListener('input', function(){ this.classList.remove('invalid'); });
+
+  // ---------- Envío ----------
+  $('signForm').addEventListener('submit', function(ev){
+    ev.preventDefault();
+    if(enviando) return;
+    var datos = validar();
+    if(!datos) return; // bloqueado: falta nombre, área o firma
+    enviando = true;
+    var btn = $('btnSubmit');
+    btn.disabled = true;
+    btn.textContent = 'Enviando…';
+
+    // El canvas es trazo (no foto): el PNG tal cual es pequeño (pocos KB).
+    var firmaDataUrl = canvas.toDataURL('image/png');
+    var firma = {
+      nombre: datos.nombre,
+      area: datos.area,
+      comentarios: $('comentarios').value.trim(),
+      satisfaccion: satisfaccion, // null si no eligió
+      firma: firmaDataUrl,
+      firmadoEn: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    docRef.update({firma: firma, estado: 'firmada'}).then(function(){
+      renderSigned({
+        nombre: firma.nombre, area: firma.area,
+        comentarios: firma.comentarios, satisfaccion: firma.satisfaccion,
+        firma: firma.firma, firmadoEn: new Date()
+      });
+      $('doneData').innerHTML = $('signedData').innerHTML;
+      var img = $('signedImgWrap').innerHTML;
+      if(img){
+        var d = document.createElement('div');
+        d.style.marginTop = '12px';
+        d.innerHTML = img;
+        $('doneData').appendChild(d);
+      }
+      show('viewDone');
+      try{ window.scrollTo({top: 0, behavior: 'smooth'}); }catch(e){}
+    }).catch(function(err){
+      console.error('[firma] Error al guardar:', err);
+      var alert = $('formAlert');
+      var msg = 'No se pudo guardar tu firma. Revisa tu conexión e inténtalo de nuevo.';
+      if(err && err.code === 'permission-denied'){
+        msg = 'No se pudo guardar tu firma (permiso denegado). Avísale al técnico para que revise el enlace.';
+      }
+      alert.textContent = msg;
+      alert.classList.add('show');
+      btn.disabled = false;
+      btn.textContent = 'Enviar mi firma';
+      enviando = false;
+    });
+  });
+
+  // ---------- Cerrar (251) ----------
+  // Tras firmar (o si ya se firmó), el botón Cerrar intenta cerrar la
+  // ventana; si sigue abierta a los ~800 ms (p. ej. webview de WhatsApp),
+  // se avisa que ya se puede cerrar a mano.
+  function cerrarPagina(){
+    try{ if(typeof window.close === 'function') window.close(); }catch(e){}
+    setTimeout(function(){
+      ['closeHintSigned', 'closeHintDone'].forEach(function(id){
+        var h = $(id); if(h) h.classList.remove('hidden');
+      });
+    }, 800);
+  }
+  $('btnCerrarSigned').addEventListener('click', cerrarPagina);
+  $('btnCerrarDone').addEventListener('click', cerrarPagina);
+
+  // ---------- Arranque ----------
+  function init(){
+    var params = new URLSearchParams(window.location.search);
+    docId = params.get('id');
+    if(!docId){
+      showError('Falta el identificador de la orden en el enlace. Abre el enlace completo que te compartió el técnico.');
+      return;
+    }
+    if(!window.FIREBASE_CONFIG || !window.firebase){
+      showError('No se pudo cargar el servicio de firma. Revisa tu conexión e inténtalo de nuevo.');
+      return;
+    }
+    try{
+      if(!firebase.apps.length) firebase.initializeApp(window.FIREBASE_CONFIG);
+    }catch(e){
+      showError('No se pudo iniciar el servicio de firma. Inténtalo de nuevo.');
+      return;
+    }
+    db = firebase.firestore();
+    docRef = db.collection('mantenimientos').doc(docId);
+    docRef.get().then(function(snap){
+      if(!snap.exists){
+        showError('No encontramos esta orden de servicio. Es posible que el enlace esté incompleto o la orden ya no exista.');
+        return;
+      }
+      order = snap.data() || {};
+      renderOrder(order);
+      if(order.firma && order.firma.firma){
+        // Ya firmada: se muestra y no se permite firmar dos veces.
+        renderSigned(order.firma);
+        show('viewSigned');
+      } else {
+        show('viewForm');
+        setupCanvas();
+      }
+    }).catch(function(err){
+      console.error('[firma] Error al cargar:', err);
+      if(err && err.code === 'permission-denied'){
+        showError('No tienes permiso para ver esta orden. Pídele al técnico que te comparta de nuevo el enlace.');
+      } else {
+        showError('No se pudo cargar la orden. Revisa tu conexión e inténtalo de nuevo.');
+      }
+    });
+  }
+
+  window.addEventListener('resize', function(){
+    // Si el ancho cambia y aún no hay firma, reajustar el canvas.
+    if(!firmaDibujada && !$('viewForm').classList.contains('hidden')) setupCanvas();
+  });
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+node_modules/
+dist/
+build/
+android/app/build/
+android/.gradle/
+android/build/
+.gradle/
+*.keystore
+**/firebase-config.js
+*.bak
+*.log
+.DS_Store
+hosting/.firebase/
+ios/Pods/
+android/app/src/main/assets/public/
+android/capacitor-cordova-android-plugins/
+android/gradle.properties
