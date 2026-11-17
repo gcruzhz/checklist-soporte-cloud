@@ -9,7 +9,7 @@ teléfonos del equipo mediante Firebase (Firestore), con caché offline.
   `android/app/build.gradle`; iOS `MARKETING_VERSION` 2.5.6 /
   `CURRENT_PROJECT_VERSION` 60).
 - **Repositorio público:** https://github.com/gcruzhz/checklist-soporte-cloud
-- **Autor:** Gerardo Cruz Hernandez (gerardo.cruzhz@gmail.com)
+- **Autor:** Gerardo Cruz Hernandez (gerardo.cruzhz@linux.com)
 - **App Android:** `mx.gerardo.checklistsoporte` (Capacitor).
 - **Firebase:** proyecto `checklist-soporte` — Auth, Firestore y Hosting
   (plan Spark, sin Cloud Functions). Hosting público:
