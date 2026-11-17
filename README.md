@@ -19,10 +19,11 @@ teléfonos del equipo mediante Firebase (Firestore), con caché offline.
 > menciona aquí solo como referencia histórica, no se documenta en detalle.
 > Todo lo de este README describe la app en la nube (2.x).
 
-> **Últimos cambios (2.5.6):** PDF de la orden de mantenimiento en 1
-> página carta, datos del equipo una sola vez en COMENTARIOS (sin
-> duplicados) y conformidad sin hora. Historial completo en
-> [docs/CHANGELOG.md](docs/CHANGELOG.md).
+> **Últimos cambios (2.5.7):** botón «Contraseña de sistemas» en Por
+> preparar (solo escritorio): verifica y cambia la contraseña del
+> usuario local de Windows «sistemas»; las contraseñas nunca salen de
+> la PC y el cambio pide permiso de administrador. Historial completo
+> en [docs/CHANGELOG.md](docs/CHANGELOG.md).
 
 ## Qué hace
 

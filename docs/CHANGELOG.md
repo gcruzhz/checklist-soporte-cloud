@@ -5,6 +5,31 @@ del proyecto (memoria 2026-11-12 a 2026-11-17) y las series de tests
 (`tests/test20*.js`). Las versiones 2.0.1–2.0.4 no tienen registro y
 no se documentan con supuestos.
 
+## 2.5.7 — 2026-11-17
+
+- **Contraseña del usuario local Windows «sistemas» (solo escritorio)**:
+  botón «🔑 Contraseña de sistemas» junto a Detectar en Por preparar.
+  Abre un panel con usuario (por defecto «sistemas», editable),
+  contraseña actual, nueva y confirmar; «Verificar» solo comprueba la
+  actual y «Cambiar contraseña» la verifica y la cambia. La web valida
+  que la nueva no esté vacía y que coincida con la confirmación antes
+  de tocar Windows.
+- **Las contraseñas nunca salen de la PC**: no se guardan en
+  localStorage, no van a Firestore, no se registran en logs ni se
+  muestran en pantalla. Windows no permite leer la contraseña actual;
+  la única forma de «compararla» es validarla con
+  `ValidateCredentials`. El cambio usa `Set-LocalUser` y **pide permiso
+  de administrador** (UAC) si la app no corre elevada.
+- Tests `test20257.js`: 790 true / 0 false; tests del detector 440
+  pasaron / 0 fallaron; smoke-257 VEREDICTO OK.
+- APK 2.5.7: 15 765 573 bytes, md5
+  `1467ee732e93461d95cb5953ccd84312`, versionCode 61, misma firma
+  permanente, instala sobre 2.5.6. Escritorio 2.5.7 en Drive
+  (AppImage, .deb y portable .exe en ZIP).
+- Pendiente de probar con datos reales: cambio real de contraseña en
+  una PC, el aviso de UAC, verificación de una contraseña vieja
+  correcta y de una incorrecta.
+
 ## 2.5.6 — 2026-11-17
 
 - PDF de la orden de mantenimiento en **1 página carta**: la orden

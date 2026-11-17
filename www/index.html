@@ -180,7 +180,7 @@
     <img class="login-logo" src="lab-icon.png" alt="Checklist de Soporte">
     <h1>Checklist de Soporte</h1>
     <p class="login-sub">Ingresa con tu usuario para ver y registrar equipos.</p>
-    <p class="login-sub" style="font-size:11px;color:#999">Versión 2.5.6</p>
+    <p class="login-sub" style="font-size:11px;color:#999">Versión 2.5.7</p>
     <div id="loginBox">
       <form id="loginForm">
         <div class="field"><label>Usuario o correo</label><input id="loginEmail" type="text" placeholder="usuario o tu@correo.com" autocomplete="username"></div>
@@ -300,6 +300,7 @@
     <button class="menu-btn dark" id="btnShowTpl"><span class="ic">&#128203;</span><span>Editar plantilla<small>del checklist</small></span></button>
     <button class="menu-btn dark wide" id="btnShowRe"><span class="ic">&#128260;</span><span>Reasignar Equipo<small>equipo no nuevo</small></span></button>
     <button class="menu-btn dark" id="btnDetectar" hidden><span class="ic">&#128187;</span><span>Detectar este equipo<small>solo en escritorio</small></span></button>
+    <button class="menu-btn dark" id="btnPassSistemas" hidden><span class="ic">&#128273;</span><span>Contraseña de sistemas<small>solo en escritorio</small></span></button>
     <button class="menu-btn dark" id="btnShowDet"><span class="ic">&#128187;</span><span>Equipos detectados<small>equipos en la red</small></span></button>
   </div>
 
@@ -358,6 +359,21 @@
     <div id="detList"></div>
   </div>
 
+  <div class="panel" id="passBox" hidden>
+    <b>&#128273; Contraseña del usuario sistemas</b>
+    <div class="share-note">Cambia la contraseña del usuario local de Windows en esta PC. La contraseña nunca se guarda ni se manda a la nube; solo se usa aquí para verificarla o cambiarla. El cambio pide permiso de administrador.</div>
+    <div class="grid2">
+      <div class="field"><label>Usuario de Windows</label><input id="fPsUser" value="sistemas" placeholder="sistemas"></div>
+      <div class="field"><label>Contraseña actual</label><input id="fPsActual" type="password" placeholder="Contraseña actual" autocomplete="off"></div>
+      <div class="field"><label>Contraseña nueva</label><input id="fPsNueva" type="password" placeholder="Contraseña nueva" autocomplete="new-password"></div>
+      <div class="field"><label>Confirmar contraseña nueva</label><input id="fPsConfirm" type="password" placeholder="Repite la contraseña nueva" autocomplete="new-password"></div>
+    </div>
+    <div class="actions">
+      <button class="btn-dark" id="btnPsVerificar">&#128269; Verificar contraseña actual</button>
+      <button class="btn-green" id="btnPsCambiar">&#128273; Cambiar contraseña</button>
+    </div>
+  </div>
+
   <div class="card share-bar" id="shareBar">
     <b>Compartir equipos</b>
     <div class="actions">
@@ -387,7 +403,7 @@
   <div class="card">
     <b>Acerca de</b>
     <div class="line">App: Checklist de Soporte</div>
-    <div class="line">Versión: 2.5.6</div>
+    <div class="line">Versión: 2.5.7</div>
     <div class="line" id="focusDiag">Foco: — · Elemento activo: —</div>
     <div class="line">Contacto: <a href="mailto:gerardo.cruzhz@linux.com">gerardo.cruzhz@linux.com</a></div>
     <div class="sub">© Gerardo Cruz Hernandez</div>
@@ -999,6 +1015,10 @@ function refreshDetectarBtn() {
     // (progreso o bloqueo); si otro código puso su propio texto, se respeta.
     if (btn.innerHTML.indexOf('Detectando software...') !== -1 || btn.innerHTML.indexOf('Equipo detectado') !== -1) btn.innerHTML = defHtml;
   });
+  // (257) Botón de contraseña: solo se muestra en escritorio; no depende
+  // del estado de detección.
+  var psBtn = document.getElementById('btnPassSistemas');
+  if (psBtn) psBtn.hidden = !window.Desktop;
 }
 function loadMachineId() {
   if (window.Desktop !== machineIdDesktop) { machineIdTried = false; machineId = null; machineIdDesktop = window.Desktop || null; }
@@ -2986,7 +3006,7 @@ document.getElementById('btnEscanear').addEventListener('click', function () {
 function togglePanel(id) {
   var show = document.getElementById(id);
   var wasHidden = show.hidden;
-  ['newBox', 'tplBox', 'reBox', 'detBox'].forEach(function (p) { if (p !== id) document.getElementById(p).hidden = true; });
+  ['newBox', 'tplBox', 'reBox', 'detBox', 'passBox'].forEach(function (p) { if (p !== id) document.getElementById(p).hidden = true; });
   show.hidden = !wasHidden;
   if (!show.hidden) show.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -3025,6 +3045,48 @@ function detectarEquipo(btn) {
   }).then(function () { showToast('Equipo detectado, ya aparece en los teléfonos'); return true; }).catch(function (e) { showToast('No se pudo detectar el equipo.' + (e && e.message ? ' ' + e.message : '')); return false; }).then(function (ok) { detectingNow = false; btn.disabled = false; btn.innerHTML = oldHtml; refreshDetectarBtn(); return ok; });
 }
 document.getElementById('btnDetectar').addEventListener('click', function () { detectarEquipo(document.getElementById('btnDetectar')); });
+// Contraseña del usuario sistemas (257): solo escritorio. Las
+// contraseñas nunca se guardan (ni localStorage ni nube): solo viajan
+// a window.Desktop para verificarlas o cambiarlas en esta PC, y los
+// campos se limpian en cuanto termina la llamada.
+function psLimpiar() {
+  ['fPsActual', 'fPsNueva', 'fPsConfirm'].forEach(function (id) { var el = document.getElementById(id); if (el) el.value = ''; });
+}
+function psUsuario() { var v = (document.getElementById('fPsUser').value || '').trim(); return v || 'sistemas'; }
+function psValidarNueva() {
+  var nueva = document.getElementById('fPsNueva').value;
+  var conf = document.getElementById('fPsConfirm').value;
+  if (!nueva) { showToast('Escribe la contraseña nueva.'); return null; }
+  if (nueva !== conf) { showToast('La contraseña nueva y su confirmación no coinciden.'); return null; }
+  return nueva;
+}
+document.getElementById('btnPassSistemas').addEventListener('click', function () { togglePanel('passBox'); });
+document.getElementById('btnPsVerificar').addEventListener('click', function () {
+  if (!window.Desktop || typeof window.Desktop.verificarPasswordSistemas !== 'function') { showToast('La verificación solo funciona en la app de escritorio.'); return; }
+  var actual = document.getElementById('fPsActual').value;
+  if (!actual) { showToast('Escribe la contraseña actual.'); return; }
+  var btn = document.getElementById('btnPsVerificar');
+  btn.disabled = true;
+  Promise.resolve(window.Desktop.verificarPasswordSistemas(psUsuario(), actual)).then(function (r) {
+    psLimpiar();
+    if (r && r.ok) showToast('Contraseña actual correcta ✓');
+    else showToast((r && r.error) || 'Contraseña actual incorrecta.');
+  }).catch(function () { psLimpiar(); showToast('No se pudo verificar la contraseña.'); }).then(function () { btn.disabled = false; });
+});
+document.getElementById('btnPsCambiar').addEventListener('click', function () {
+  if (!window.Desktop || typeof window.Desktop.cambiarPasswordSistemas !== 'function') { showToast('El cambio de contraseña solo funciona en la app de escritorio.'); return; }
+  var actual = document.getElementById('fPsActual').value;
+  if (!actual) { showToast('Escribe la contraseña actual.'); return; }
+  var nueva = psValidarNueva();
+  if (nueva === null) return;
+  var btn = document.getElementById('btnPsCambiar');
+  btn.disabled = true;
+  Promise.resolve(window.Desktop.cambiarPasswordSistemas(psUsuario(), actual, nueva)).then(function (r) {
+    psLimpiar();
+    if (r && r.ok) showToast('Contraseña cambiada ✓');
+    else showToast((r && r.error) || 'No se pudo cambiar la contraseña.');
+  }).catch(function () { psLimpiar(); showToast('No se pudo cambiar la contraseña.'); }).then(function () { btn.disabled = false; });
+});
 document.getElementById('detList').addEventListener('click', function (e) {
   var t = e.target;
   var use = t.closest('[data-det-use]');
@@ -5610,7 +5672,7 @@ document.getElementById('btnEuGuardar').addEventListener('click', function () {
   });
 });
 document.getElementById('btnReportar').addEventListener('click', function () {
-  window.location.href = 'mailto:gerardo.cruzhz@linux.com?subject=' + encodeURIComponent('Reporte de problema - Checklist de Soporte 256') + '&body=' + encodeURIComponent('Describe el problema:\n\n\nVersión de la app: 256');
+  window.location.href = 'mailto:gerardo.cruzhz@linux.com?subject=' + encodeURIComponent('Reporte de problema - Checklist de Soporte 257') + '&body=' + encodeURIComponent('Describe el problema:\n\n\nVersión de la app: 257');
 });
 
 boot();
