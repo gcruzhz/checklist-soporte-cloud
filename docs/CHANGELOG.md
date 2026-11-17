@@ -1,9 +1,31 @@
 # Changelog — Checklist de Soporte (nube)
 
-Resumen por versión, 2.0.0 → 2.5.9. Fuentes: el historial registrado
+Resumen por versión, 2.0.0 → 2.5.10. Fuentes: el historial registrado
 del proyecto (memoria 2026-11-12 a 2026-11-17) y las series de tests
 (`tests/test20*.js`). Las versiones 2.0.1–2.0.4 no tienen registro y
 no se documentan con supuestos.
+
+## 2.5.10 — 2026-11-17
+
+- **Compartir un equipo detectado: WhatsApp recortado hasta Impresora,
+  correo completo.** El botón «📲 Compartir por WhatsApp» manda ahora
+  solo hasta la línea «Impresora: ...» (marca, modelo, tipo, serie,
+  hostname, hardware, redes, AnyDesk, versiones detectadas, impresora)
+  y ya no incluye políticas, usuario sistemas, escritorio revisado, SO
+  detectado por, puntos detectados ni fecha/quién detectó. El botón
+  «✉️ Compartir por correo» sigue mandando el texto completo, como en
+  2.5.9. Si no hay impresora, el texto de WhatsApp termina en la última
+  línea presente, sin dejar una línea de Impresora vacía.
+- `detShareText(d, corto)` en `www/index.html`: con `corto=true`
+  (WhatsApp) vuelve tras la línea de Impresora; sin el parámetro
+  (correo, vía `detShareMail`) construye el texto completo de 2.5.9.
+  El panel de «Equipos detectados» en pantalla no cambió.
+- Tests `test20260.js`: **832 true / 0 false** (823 de 2.5.9 + 9
+  nuevas de la serie 260: WhatsApp corto en ambos paneles, correo
+  completo en ambos paneles, sin impresora no hay línea Impresora,
+  panel sin cambios); detector 473/0; smoke-260 VEREDICTO OK.
+- APK 2.5.10: 15 768 085 B, md5 `a8085d122467b985b4222e559039efbd`,
+  versionCode 64, firma permanente, se instala sobre la 2.5.9.
 
 ## 2.5.9 — 2026-11-17
 

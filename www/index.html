@@ -180,7 +180,7 @@
     <img class="login-logo" src="lab-icon.png" alt="Checklist de Soporte">
     <h1>Checklist de Soporte</h1>
     <p class="login-sub">Ingresa con tu usuario para ver y registrar equipos.</p>
-    <p class="login-sub" style="font-size:11px;color:#999">Versión 2.5.9</p>
+    <p class="login-sub" style="font-size:11px;color:#999">Versión 2.5.10</p>
     <div id="loginBox">
       <form id="loginForm">
         <div class="field"><label>Usuario o correo</label><input id="loginEmail" type="text" placeholder="usuario o tu@correo.com" autocomplete="username"></div>
@@ -418,7 +418,7 @@
   <div class="card">
     <b>Acerca de</b>
     <div class="line">App: Checklist de Soporte</div>
-    <div class="line">Versión: 2.5.9</div>
+    <div class="line">Versión: 2.5.10</div>
     <div class="line" id="focusDiag">Foco: — · Elemento activo: —</div>
     <div class="line">Contacto: <a href="mailto:gerardo.cruzhz@linux.com">gerardo.cruzhz@linux.com</a></div>
     <div class="sub">© Gerardo Cruz Hernandez</div>
@@ -2309,7 +2309,7 @@ function shareAvanceMail(p) {
 // equipo aún no se haya guardado como preparación: es solo el documento
 // detectado. Reutiliza los helpers de formato (hardware, redes, AnyDesk,
 // versiones, políticas, impresora, usuario de sistemas).
-function detShareText(d) {
+function detShareText(d, corto) {
   d = d || {};
   var det = d.detalles || {};
   var ver = d.versiones || {};
@@ -2332,6 +2332,9 @@ function detShareText(d) {
   if (av && vl.indexOf('Antivirus:') === -1) lines.push('Antivirus: ' + av);
   var imp = d.impresora || det.impresora || '';
   if (imp) lines.push('Impresora: ' + imp);
+  // WhatsApp (corto=true) termina aquí, en la línea de Impresora.
+  // El correo usa el texto completo, con lo que sigue.
+  if (corto) return lines.join('\n');
   var pol = d.politicas || det.politicas || null;
   if (pol) lines.push(politicasText(pol));
   var us = (typeof d.usuarioSistemas !== 'undefined') ? d.usuarioSistemas : det.usuarioSistemas;
@@ -3241,7 +3244,7 @@ document.getElementById('detList').addEventListener('click', function (e) {
   if (wa || mail) {
     var dd = detectados.find(function (x) { return String(x.id) === String(id); });
     if (!dd) return;
-    if (wa) shareText(detShareText(dd)); else detShareMail(dd);
+    if (wa) shareText(detShareText(dd, true)); else detShareMail(dd);
     return;
   }
   // Guardar para después (238b): crea el borrador en En preparación y
@@ -5247,7 +5250,7 @@ document.getElementById('mantDetList').addEventListener('click', function (e) {
   var el = wa || mail;
   var dd = detectados.find(function (x) { return String(x.id) === String(el.getAttribute(wa ? 'data-mant-det-wa' : 'data-mant-det-mail')); });
   if (!dd) return;
-  if (wa) shareText(detShareText(dd)); else detShareMail(dd);
+  if (wa) shareText(detShareText(dd, true)); else detShareMail(dd);
 });
 document.getElementById('mantAdminFilter').addEventListener('change', function (e) { mantAdminViewUid = e.target.value; renderMant(); });
 document.getElementById('btnMantCrear').addEventListener('click', function () { mantCrearOrden(); });
@@ -5833,7 +5836,7 @@ document.getElementById('btnEuGuardar').addEventListener('click', function () {
   });
 });
 document.getElementById('btnReportar').addEventListener('click', function () {
-  window.location.href = 'mailto:gerardo.cruzhz@linux.com?subject=' + encodeURIComponent('Reporte de problema - Checklist de Soporte 259') + '&body=' + encodeURIComponent('Describe el problema:\n\n\nVersión de la app: 259');
+  window.location.href = 'mailto:gerardo.cruzhz@linux.com?subject=' + encodeURIComponent('Reporte de problema - Checklist de Soporte 260') + '&body=' + encodeURIComponent('Describe el problema:\n\n\nVersión de la app: 260');
 });
 
 boot();

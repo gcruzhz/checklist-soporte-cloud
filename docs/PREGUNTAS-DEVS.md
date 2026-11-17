@@ -52,9 +52,10 @@ Los PDF y el Excel se generan con código propio, sin librerías de diseño.
   entrega un .exe portable en ZIP); iOS necesita una Mac; los archivos de
   Windows van sin firmar por decisión de Gerardo.
 - **Cómo se prueba todo:** en teléfono y PC reales (ver `docs/TESTING.md`).
-  Pendiente de probar en 2.5.9: compartir un equipo detectado por
-  WhatsApp y por correo desde un equipo real, en teléfono y en
-  escritorio. Pendiente de probar en 2.5.8: la búsqueda y la
+  Pendiente de probar en 2.5.10: el compartir acortado por WhatsApp
+  (hasta Impresora) y el correo completo desde un equipo detectado
+  real, en teléfono y en escritorio. Pendiente de probar en 2.5.8: la
+  búsqueda y la
   instalación reales de actualizaciones de Windows en una PC con
   pendientes, el aviso de administrador (UAC) y el aviso de reinicio
   (la app nunca reinicia sola). Pendiente de probar en 2.5.7: el cambio
@@ -67,8 +68,8 @@ Los PDF y el Excel se generan con código propio, sin librerías de diseño.
 - Nube: https://github.com/gcruzhz/checklist-soporte-cloud
 - Escritorio: https://github.com/gcruzhz/checklist-soporte-desktop
 - Paquete completo para devs (código + docs + binarios que no van a
-  GitHub): ZIP 2.5.9 en Drive —
-  https://drive.google.com/file/d/1NYxFz0VfniaekanJ7UpWb-KNr2J1jK6O/view?usp=drivesdk
+  GitHub): ZIP 2.5.10 en Drive —
+  https://drive.google.com/file/d/1M34fVCTE1MwAG9hrSESIHvRN3Z1D8IqX/view?usp=drivesdk
 - En cada repo: `docs/CHANGELOG.md` (historial por versión),
   `docs/SETUP_FIREBASE.md` (cómo levantar el backend),
   `docs/DATA_MODEL.md` (colecciones de Firestore),
