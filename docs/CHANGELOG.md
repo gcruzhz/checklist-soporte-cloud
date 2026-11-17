@@ -1,9 +1,40 @@
 # Changelog — Checklist de Soporte (nube)
 
-Resumen por versión, 2.0.0 → 2.5.6. Fuentes: el historial registrado
+Resumen por versión, 2.0.0 → 2.5.8. Fuentes: el historial registrado
 del proyecto (memoria 2026-11-12 a 2026-11-17) y las series de tests
 (`tests/test20*.js`). Las versiones 2.0.1–2.0.4 no tienen registro y
 no se documentan con supuestos.
+
+## 2.5.8 — 2026-11-17
+
+- **Actualizaciones de Windows (solo escritorio)**: botón «🔄
+  Actualizaciones de Windows» junto a Detectar y Contraseña de
+  sistemas en Por preparar. Abre un panel con la última actualización
+  instalada (Get-HotFix), la fecha de la última búsqueda, el número de
+  actualizaciones pendientes con su lista (primeras 10 + «y N más») y
+  los botones «Buscar actualizaciones» e «Instalar actualizaciones».
+- **La búsqueda usa la API de Windows Update Agent (COM)** sin el
+  módulo PSWindowsUpdate (no viene instalado en Windows):
+  `Microsoft.Update.Session` → `CreateUpdateSearcher()` →
+  `Search("IsInstalled=0 and Type='Software'")`. La búsqueda NO
+  necesita elevación y puede tardar varios minutos; los botones se
+  deshabilitan mientras corre una operación.
+- **Instalar pide permiso de administrador** (UAC) si la app no corre
+  elevada (mismo patrón que 2.5.7: `.ps1` temporal que se borra al
+  terminar; la salida del proceso elevado se captura por archivo
+  temporal). La instalación vuelve a buscar las pendientes en la
+  misma sesión y las instala (`ResultCode 2`); puede tardar mucho.
+  **La app NUNCA reinicia sola**: si Windows pide reinicio, solo lo
+  avisa en el panel y en el mensaje.
+- Tests `test20258.js`: 809 true / 0 false; tests del detector 473
+  pasaron / 0 fallaron; smoke-258 VEREDICTO OK.
+- APK 2.5.8: 15 766 905 bytes, md5
+  `0736f9bf250d6def8c8fe302b1de4882`, versionCode 62, misma firma
+  permanente, instala sobre 2.5.7. Escritorio 2.5.8 en Drive
+  (AppImage, .deb y portable .exe en ZIP).
+- Pendiente de probar con datos reales: búsqueda e instalación reales
+  en una PC con actualizaciones pendientes, el aviso de UAC y el aviso
+  de reinicio.
 
 ## 2.5.7 — 2026-11-17
 

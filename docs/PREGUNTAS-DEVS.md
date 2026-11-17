@@ -1,7 +1,7 @@
 # Preguntas frecuentes para los devs — Checklist de Soporte
 
 Respuestas listas para pasarle a un desarrollador que va a tomar la app.
-Versión actual: **2.5.7** (2026-11-17). Repos y documentación completa en
+Versión actual: **2.5.8** (2026-11-17). Repos y documentación completa en
 [GitHub](#código-y-documentación).
 
 ## ¿En qué lenguaje está?
@@ -52,17 +52,19 @@ Los PDF y el Excel se generan con código propio, sin librerías de diseño.
   entrega un .exe portable en ZIP); iOS necesita una Mac; los archivos de
   Windows van sin firmar por decisión de Gerardo.
 - **Cómo se prueba todo:** en teléfono y PC reales (ver `docs/TESTING.md`).
-  Pendiente de probar en 2.5.7: el cambio real de contraseña del usuario
-  Windows «sistemas», el aviso de administrador (UAC) y la verificación
-  de contraseña vieja correcta e incorrecta.
+  Pendiente de probar en 2.5.8: la búsqueda y la instalación reales de
+  actualizaciones de Windows en una PC con pendientes, el aviso de
+  administrador (UAC) y el aviso de reinicio (la app nunca reinicia
+  sola). Ya probado en 2.5.7: el cambio de contraseña del usuario
+  Windows «sistemas» se entregó en esa versión.
 
 ## Código y documentación
 
 - Nube: https://github.com/gcruzhz/checklist-soporte-cloud
 - Escritorio: https://github.com/gcruzhz/checklist-soporte-desktop
 - Paquete completo para devs (código + docs + binarios que no van a
-  GitHub): ZIP 2.5.7 en Drive —
-  https://drive.google.com/file/d/1syTWdYzLWes7feqFHtOL6P10ncg3CCYB/view?usp=drivesdk
+  GitHub): ZIP 2.5.8 en Drive —
+  https://drive.google.com/file/d/1iuvGqqKc9SGclImkjqFwqLKycdafSSVv/view?usp=drivesdk
 - En cada repo: `docs/CHANGELOG.md` (historial por versión),
   `docs/SETUP_FIREBASE.md` (cómo levantar el backend),
   `docs/DATA_MODEL.md` (colecciones de Firestore),

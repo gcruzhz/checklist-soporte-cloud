@@ -180,7 +180,7 @@
     <img class="login-logo" src="lab-icon.png" alt="Checklist de Soporte">
     <h1>Checklist de Soporte</h1>
     <p class="login-sub">Ingresa con tu usuario para ver y registrar equipos.</p>
-    <p class="login-sub" style="font-size:11px;color:#999">Versión 2.5.7</p>
+    <p class="login-sub" style="font-size:11px;color:#999">Versión 2.5.8</p>
     <div id="loginBox">
       <form id="loginForm">
         <div class="field"><label>Usuario o correo</label><input id="loginEmail" type="text" placeholder="usuario o tu@correo.com" autocomplete="username"></div>
@@ -301,6 +301,7 @@
     <button class="menu-btn dark wide" id="btnShowRe"><span class="ic">&#128260;</span><span>Reasignar Equipo<small>equipo no nuevo</small></span></button>
     <button class="menu-btn dark" id="btnDetectar" hidden><span class="ic">&#128187;</span><span>Detectar este equipo<small>solo en escritorio</small></span></button>
     <button class="menu-btn dark" id="btnPassSistemas" hidden><span class="ic">&#128273;</span><span>Contraseña de sistemas<small>solo en escritorio</small></span></button>
+    <button class="menu-btn dark" id="btnWinUpd" hidden><span class="ic">&#128260;</span><span>Actualizaciones de Windows<small>solo en escritorio</small></span></button>
     <button class="menu-btn dark" id="btnShowDet"><span class="ic">&#128187;</span><span>Equipos detectados<small>equipos en la red</small></span></button>
   </div>
 
@@ -374,6 +375,20 @@
     </div>
   </div>
 
+  <div class="panel" id="winUpdBox" hidden>
+    <b>&#128260; Actualizaciones de Windows</b>
+    <div class="share-note">Revisa si Windows tiene actualizaciones pendientes y las instala si tú lo pides. La búsqueda puede tardar varios minutos; la instalación puede tardar mucho más. Al final puede pedir reiniciar: la app NUNCA reinicia sola, tú decides cuándo.</div>
+    <div class="line" id="wuUltima">Última actualización instalada: —</div>
+    <div class="line" id="wuUltimaBusqueda">Última búsqueda: —</div>
+    <div class="line" id="wuResumen">Sin buscar todavía.</div>
+    <div id="wuLista"></div>
+    <div class="line" id="wuEstado"></div>
+    <div class="actions">
+      <button class="btn-dark" id="btnWuBuscar">&#128269; Buscar actualizaciones</button>
+      <button class="btn-green" id="btnWuInstalar" disabled>&#11015; Instalar actualizaciones</button>
+    </div>
+  </div>
+
   <div class="card share-bar" id="shareBar">
     <b>Compartir equipos</b>
     <div class="actions">
@@ -403,7 +418,7 @@
   <div class="card">
     <b>Acerca de</b>
     <div class="line">App: Checklist de Soporte</div>
-    <div class="line">Versión: 2.5.7</div>
+    <div class="line">Versión: 2.5.8</div>
     <div class="line" id="focusDiag">Foco: — · Elemento activo: —</div>
     <div class="line">Contacto: <a href="mailto:gerardo.cruzhz@linux.com">gerardo.cruzhz@linux.com</a></div>
     <div class="sub">© Gerardo Cruz Hernandez</div>
@@ -1019,6 +1034,10 @@ function refreshDetectarBtn() {
   // del estado de detección.
   var psBtn = document.getElementById('btnPassSistemas');
   if (psBtn) psBtn.hidden = !window.Desktop;
+  // (258) Botón de actualizaciones: solo se muestra en escritorio; no
+  // depende del estado de detección.
+  var wuBtn = document.getElementById('btnWinUpd');
+  if (wuBtn) wuBtn.hidden = !window.Desktop;
 }
 function loadMachineId() {
   if (window.Desktop !== machineIdDesktop) { machineIdTried = false; machineId = null; machineIdDesktop = window.Desktop || null; }
@@ -3006,7 +3025,7 @@ document.getElementById('btnEscanear').addEventListener('click', function () {
 function togglePanel(id) {
   var show = document.getElementById(id);
   var wasHidden = show.hidden;
-  ['newBox', 'tplBox', 'reBox', 'detBox', 'passBox'].forEach(function (p) { if (p !== id) document.getElementById(p).hidden = true; });
+  ['newBox', 'tplBox', 'reBox', 'detBox', 'passBox', 'winUpdBox'].forEach(function (p) { if (p !== id) document.getElementById(p).hidden = true; });
   show.hidden = !wasHidden;
   if (!show.hidden) show.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -3086,6 +3105,75 @@ document.getElementById('btnPsCambiar').addEventListener('click', function () {
     if (r && r.ok) showToast('Contraseña cambiada ✓');
     else showToast((r && r.error) || 'No se pudo cambiar la contraseña.');
   }).catch(function () { psLimpiar(); showToast('No se pudo cambiar la contraseña.'); }).then(function () { btn.disabled = false; });
+});
+// Actualizaciones de Windows (258): solo escritorio. Busca las pendientes
+// con la API de Windows Update y, si el usuario lo pide, las instala (pide
+// permiso de administrador). Nunca reinicia sola: si Windows pide
+// reinicio, solo lo avisa. Nada de esto se guarda ni se manda a la nube.
+var wuPendientes = [];
+var wuOcupado = false;
+function wuEstado(txt) { var el = document.getElementById('wuEstado'); if (el) el.textContent = txt || ''; }
+function wuRefrescarBotones() {
+  var b = document.getElementById('btnWuBuscar');
+  var i = document.getElementById('btnWuInstalar');
+  if (b) b.disabled = wuOcupado;
+  if (i) i.disabled = wuOcupado || wuPendientes.length === 0;
+}
+function wuRenderLista() {
+  var r = document.getElementById('wuResumen');
+  var l = document.getElementById('wuLista');
+  if (wuPendientes.length === 0) {
+    if (r) r.textContent = 'Sin actualizaciones pendientes ✓';
+    if (l) l.innerHTML = '';
+  } else {
+    if (r) r.textContent = 'Actualizaciones pendientes: ' + wuPendientes.length;
+    if (l) l.innerHTML = wuPendientes.slice(0, 10).map(function (u) {
+      return '<div>• ' + esc((u.kb ? u.kb + ' — ' : '') + (u.titulo || '')) + '</div>';
+    }).join('') + (wuPendientes.length > 10 ? '<div>… y ' + (wuPendientes.length - 10) + ' más</div>' : '');
+  }
+  wuRefrescarBotones();
+}
+document.getElementById('btnWinUpd').addEventListener('click', function () { togglePanel('winUpdBox'); });
+document.getElementById('btnWuBuscar').addEventListener('click', function () {
+  if (!window.Desktop || typeof window.Desktop.buscarActualizaciones !== 'function') { showToast('La búsqueda solo funciona en la app de escritorio.'); return; }
+  if (wuOcupado) return;
+  wuOcupado = true; wuRefrescarBotones();
+  wuEstado('Buscando actualizaciones… puede tardar varios minutos.');
+  Promise.resolve(window.Desktop.buscarActualizaciones()).then(function (r) {
+    wuOcupado = false;
+    if (!r || !r.ok) { wuEstado(''); showToast((r && r.error) || 'Windows Update no respondió.'); wuRefrescarBotones(); return; }
+    wuPendientes = (r.pendientes || []);
+    var u = document.getElementById('wuUltima');
+    if (u) u.textContent = 'Última actualización instalada: ' + (r.ultimaInstalada || '—');
+    var b = document.getElementById('wuUltimaBusqueda');
+    if (b) b.textContent = 'Última búsqueda: ' + (r.ultimaBusqueda || '—');
+    wuEstado('');
+    wuRenderLista();
+    showToast(wuPendientes.length === 0 ? 'Windows está actualizado ✓' : 'Se encontraron ' + wuPendientes.length + ' actualizaciones pendientes.');
+  }).catch(function () { wuOcupado = false; wuEstado(''); showToast('Windows Update no respondió.'); wuRefrescarBotones(); });
+});
+document.getElementById('btnWuInstalar').addEventListener('click', function () {
+  if (!window.Desktop || typeof window.Desktop.instalarActualizaciones !== 'function') { showToast('La instalación solo funciona en la app de escritorio.'); return; }
+  if (wuOcupado) return;
+  if (wuPendientes.length === 0) { showToast('No hay actualizaciones pendientes para instalar.'); return; }
+  wuOcupado = true; wuRefrescarBotones();
+  wuEstado('Instalando actualizaciones… puede tardar mucho; no cierres la app.');
+  Promise.resolve(window.Desktop.instalarActualizaciones()).then(function (r) {
+    wuOcupado = false;
+    if (!r || !r.ok) { wuEstado(''); showToast((r && r.error) || 'No se pudieron instalar las actualizaciones.'); wuRefrescarBotones(); return; }
+    wuPendientes = [];
+    var res = document.getElementById('wuResumen');
+    if (res) res.textContent = 'Instalación terminada. Vuelve a buscar para ver si queda algo pendiente.';
+    var li = document.getElementById('wuLista');
+    if (li) li.innerHTML = '';
+    wuRefrescarBotones();
+    if ((r.instaladas || 0) === 0 && (r.fallidas || 0) === 0) { wuEstado(''); showToast('No había actualizaciones pendientes para instalar.'); return; }
+    var msg = 'Actualizaciones instaladas: ' + (r.instaladas || 0);
+    if (r.fallidas) msg += ' · fallaron: ' + r.fallidas;
+    if (r.reinicioRequerido) msg += '. ⚠️ Windows pide reiniciar: la app no reinicia sola, reinicia cuando tú quieras.';
+    wuEstado(r.reinicioRequerido ? '⚠️ Windows pide reiniciar para terminar. La app no reinicia sola.' : '');
+    showToast(msg);
+  }).catch(function () { wuOcupado = false; wuEstado(''); showToast('No se pudieron instalar las actualizaciones.'); wuRefrescarBotones(); });
 });
 document.getElementById('detList').addEventListener('click', function (e) {
   var t = e.target;
@@ -5672,7 +5760,7 @@ document.getElementById('btnEuGuardar').addEventListener('click', function () {
   });
 });
 document.getElementById('btnReportar').addEventListener('click', function () {
-  window.location.href = 'mailto:gerardo.cruzhz@linux.com?subject=' + encodeURIComponent('Reporte de problema - Checklist de Soporte 257') + '&body=' + encodeURIComponent('Describe el problema:\n\n\nVersión de la app: 257');
+  window.location.href = 'mailto:gerardo.cruzhz@linux.com?subject=' + encodeURIComponent('Reporte de problema - Checklist de Soporte 258') + '&body=' + encodeURIComponent('Describe el problema:\n\n\nVersión de la app: 258');
 });
 
 boot();
