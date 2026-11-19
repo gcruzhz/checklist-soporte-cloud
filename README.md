@@ -19,12 +19,11 @@ teléfonos del equipo mediante Firebase (Firestore), con caché offline.
 > menciona aquí solo como referencia histórica, no se documenta en detalle.
 > Todo lo de este README describe la app en la nube (2.x).
 
-> **Últimos cambios (2.5.10):** en «Equipos detectados» el botón
-> «📲 Compartir por WhatsApp» manda solo hasta la línea «Impresora:»
-> (marca, modelo, serie, hardware, redes, AnyDesk, versiones,
-> impresora); «✉️ Compartir por correo» sigue mandando el texto
-> completo con políticas y fecha de detección. Compartir no marca el
-> equipo como usado. Historial completo
+> **Últimos cambios (2.5.11):** vista nueva «Responsiva» en Inicio: un
+> formulario (Nombre Completo, Número de colaborador, Sucursal, Puesto,
+> Jefe Directo, Área) que se envía por WhatsApp al número configurado,
+> guardado solo en el teléfono; sin número abre WhatsApp para elegir el
+> contacto. El envío no guarda nada en la nube. Historial completo
 > en [docs/CHANGELOG.md](docs/CHANGELOG.md).
 
 ## Qué hace

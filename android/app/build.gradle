@@ -13,8 +13,8 @@ android {
         applicationId "mx.gerardo.checklistsoporte"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 64
-        versionName "2.5.10"
+        versionCode 65
+        versionName "2.5.11"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

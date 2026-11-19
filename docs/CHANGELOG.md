@@ -1,9 +1,45 @@
 # Changelog — Checklist de Soporte (nube)
 
-Resumen por versión, 2.0.0 → 2.5.10. Fuentes: el historial registrado
+Resumen por versión, 2.0.0 → 2.5.11. Fuentes: el historial registrado
 del proyecto (memoria 2026-11-12 a 2026-11-17) y las series de tests
 (`tests/test20*.js`). Las versiones 2.0.1–2.0.4 no tienen registro y
 no se documentan con supuestos.
+
+## 2.5.11 — 2026-11-19
+
+- **Vista «Responsiva»: formulario que se envía por WhatsApp al número
+  configurado.** Quinto botón «📋 Responsiva» en el selector de Inicio
+  (solo desde Inicio, no hay pestaña). El formulario pide Nombre
+  Completo, Número de colaborador, Sucursal, Puesto, Jefe Directo y
+  Área, todos obligatorios: si falta alguno se marca en rojo
+  (`.campo-falta`, se quita al escribir) y el toast nombra los que
+  faltan. Debajo, el campo «Número de WhatsApp para enviar el
+  formulario» (tel, ejemplo de 10 dígitos) se guarda en localStorage
+  (`checklist-soporte-resp-wa-v1`) al escribir y se carga al abrir la
+  vista; no se manda a la nube. Al enviar, con los 6 campos y número
+  válido (al menos 10 dígitos), abre
+  `https://wa.me/<número>?text=...` con el número normalizado por
+  `mantWaNumber` (10 dígitos → 52…) y el texto con el título
+  «Responsiva — Checklist de Soporte», la fecha de hoy y los 6 campos
+  con sus etiquetas. Sin número configurado abre `wa.me/?text=...`
+  (vía `shareText`) para elegir el contacto y avisa con toast. El
+  botón «Limpiar» vacía los 6 campos, no el número. El envío no guarda
+  el formulario en la nube ni en localStorage.
+- `respEnviar`, `respTexto`, `respCargarWa`, `respLimpiar` y
+  `RESP_CAMPOS` en `www/index.html`; vista `#viewResp`, botón
+  `#btnGoResp`, campos `#fResp-nombre`, `#fResp-colaborador`,
+  `#fResp-sucursal`, `#fResp-puesto`, `#fResp-jefe`, `#fResp-area`,
+  `#fResp-wa`, botones `#btnRespEnviar` y `#btnRespLimpiar`.
+- Tests `test20261.js`: **847 true / 0 false** (832 de 2.5.10 + 15
+  nuevas de la serie 261: vista y botón, 6 campos en orden, validación
+  en rojo sin abrir WhatsApp, wa.me con 52 y los 6 datos y fecha, sin
+  número abre wa.me/?text= y avisa, número persistido en
+  localStorage, Limpiar vacía los 6 campos); detector 473/0;
+  smoke-261 VEREDICTO OK.
+- Solo código, tests, smoke y docs en este cambio: la APK 2.5.11
+  (versionCode 65) y el escritorio se construyen aparte; el bundle
+  de Firebase sigue con md5 `57fa245be36954586955b6005296f937`, sin
+  cambios.
 
 ## 2.5.10 — 2026-11-17
 

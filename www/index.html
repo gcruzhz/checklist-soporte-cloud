@@ -180,7 +180,7 @@
     <img class="login-logo" src="lab-icon.png" alt="Checklist de Soporte">
     <h1>Checklist de Soporte</h1>
     <p class="login-sub">Ingresa con tu usuario para ver y registrar equipos.</p>
-    <p class="login-sub" style="font-size:11px;color:#999">Versión 2.5.10</p>
+    <p class="login-sub" style="font-size:11px;color:#999">Versión 2.5.11</p>
     <div id="loginBox">
       <form id="loginForm">
         <div class="field"><label>Usuario o correo</label><input id="loginEmail" type="text" placeholder="usuario o tu@correo.com" autocomplete="username"></div>
@@ -265,6 +265,7 @@
       <button class="menu-btn dark" id="btnGoRec"><span class="ic">📥</span><span>Recibir renta<small>revisar equipos que llegan</small></span></button>
       <button class="menu-btn dark" id="btnGoFor"><span class="ic">📦</span><span>Entrega Renta<small>entregar equipos de renta</small></span></button>
       <button class="menu-btn green" id="btnGoMant"><span class="ic">🔧</span><span>Mantenimientos Preventivos<small>órdenes de servicio con folio</small></span></button>
+      <button class="menu-btn green" id="btnGoResp"><span class="ic">📋</span><span>Responsiva<small>formulario para el colaborador</small></span></button>
     </div>
   </div>
   <div id="viewPreparar">
@@ -418,7 +419,7 @@
   <div class="card">
     <b>Acerca de</b>
     <div class="line">App: Checklist de Soporte</div>
-    <div class="line">Versión: 2.5.10</div>
+    <div class="line">Versión: 2.5.11</div>
     <div class="line" id="focusDiag">Foco: — · Elemento activo: —</div>
     <div class="line">Contacto: <a href="mailto:gerardo.cruzhz@linux.com">gerardo.cruzhz@linux.com</a></div>
     <div class="sub">© Gerardo Cruz Hernandez</div>
@@ -565,6 +566,26 @@
       </div>
       <div class="actions"><button class="btn-danger" id="btnMantCancelarOrden">Cancelar orden</button><button class="btn-danger" id="btnMantEliminarOrden" hidden>Eliminar orden</button></div>
       <div class="share-note" id="mantOrderNote"></div>
+    </div>
+  </div>
+  <div id="viewResp" hidden>
+    <div class="card">
+      <b>Responsiva</b>
+      <div class="share-note">Formulario de responsiva del colaborador: se envía por WhatsApp al número configurado. No se guarda en la nube ni en el teléfono (solo el número se recuerda en este teléfono).</div>
+    </div>
+    <div class="panel" id="respFormBox">
+      <div class="field"><label>Nombre Completo *</label><input id="fResp-nombre" placeholder="Nombre completo del colaborador"></div>
+      <div class="field"><label>Número de colaborador *</label><input id="fResp-colaborador" placeholder="Número de colaborador"></div>
+      <div class="field"><label>Sucursal *</label><input id="fResp-sucursal" placeholder="Sucursal"></div>
+      <div class="field"><label>Puesto *</label><input id="fResp-puesto" placeholder="Puesto"></div>
+      <div class="field"><label>Jefe Directo *</label><input id="fResp-jefe" placeholder="Jefe directo"></div>
+      <div class="field"><label>Área *</label><input id="fResp-area" placeholder="Área"></div>
+      <div class="field"><label>Número de WhatsApp para enviar el formulario</label><input id="fResp-wa" type="tel" placeholder="Ej. 5512345678 (10 dígitos)"></div>
+      <div class="share-note">El número de WhatsApp se guarda solo en este teléfono, no se manda a la nube. Si está vacío, al enviar se te pedirá elegir el contacto en WhatsApp.</div>
+      <div class="actions">
+        <button class="btn-green" id="btnRespEnviar">📲 Enviar por WhatsApp</button>
+        <button class="btn-ghost" id="btnRespLimpiar">Limpiar</button>
+      </div>
     </div>
   </div>
   <div id="viewUsuarios" hidden>
@@ -5225,6 +5246,7 @@ document.getElementById('btnGoPreparar').addEventListener('click', function () {
 document.getElementById('btnGoRec').addEventListener('click', function () { showVista('rec'); });
 document.getElementById('btnGoFor').addEventListener('click', function () { showVista('for'); });
 document.getElementById('btnGoMant').addEventListener('click', function () { showVista('mant'); });
+document.getElementById('btnGoResp').addEventListener('click', function () { showVista('resp'); });
 // Mantenimientos: lista, formulario y orden.
 document.getElementById('btnMantNuevo').addEventListener('click', function () { mantOpenForm(null, null); });
 document.getElementById('btnMantDet').addEventListener('click', function () { var b = document.getElementById('mantDetBox'); b.hidden = !b.hidden; if (!b.hidden) renderMantDetectados(); });
@@ -5267,6 +5289,74 @@ document.getElementById('btnMantCrear').addEventListener('click', function () { 
     }
   });
 });
+// (261) Responsiva: formulario que se envía por WhatsApp al número
+// configurado. El formulario NO se guarda en la nube ni en localStorage:
+// solo el número de WhatsApp persiste, en este teléfono.
+// Los 6 campos son obligatorios; los que falten se marcan con
+// .campo-falta y el toast los nombra (mismo patrón que Mantenimientos).
+var RESP_WA_KEY = 'checklist-soporte-resp-wa-v1';
+var RESP_CAMPOS = [
+  ['fResp-nombre', 'Nombre Completo'],
+  ['fResp-colaborador', 'Número de colaborador'],
+  ['fResp-sucursal', 'Sucursal'],
+  ['fResp-puesto', 'Puesto'],
+  ['fResp-jefe', 'Jefe Directo'],
+  ['fResp-area', 'Área'],
+];
+function respCargarWa() {
+  var el = document.getElementById('fResp-wa');
+  if (!el) return;
+  try { el.value = localStorage.getItem(RESP_WA_KEY) || ''; } catch (e) { el.value = ''; }
+}
+function respTexto() {
+  var hoy = new Date();
+  var fecha = hoy.getDate() + '/' + (hoy.getMonth() + 1) + '/' + hoy.getFullYear();
+  var lines = ['Responsiva — Checklist de Soporte', 'Fecha: ' + fecha];
+  RESP_CAMPOS.forEach(function (c) {
+    var el = document.getElementById(c[0]);
+    lines.push(c[1] + ': ' + (el ? el.value.trim() : ''));
+  });
+  return lines.join('\n');
+}
+function respEnviar() {
+  var faltan = [];
+  RESP_CAMPOS.forEach(function (c) {
+    var el = document.getElementById(c[0]);
+    if (!el) return;
+    if (!el.value.trim()) { el.classList.add('campo-falta'); faltan.push(c[1]); }
+  });
+  if (faltan.length) { showToast('Faltan: ' + faltan.join(', ') + '.'); return; }
+  var waEl = document.getElementById('fResp-wa');
+  var num = mantWaNumber(waEl ? waEl.value : '');
+  if (waEl && waEl.value.trim() && num.length < 10) { showToast('El número de WhatsApp debe tener al menos 10 dígitos.'); return; }
+  var texto = respTexto();
+  if (!num) {
+    showToast('No hay número de WhatsApp guardado: elige el contacto en WhatsApp.');
+    shareText(texto);
+    return;
+  }
+  window.open('https://wa.me/' + num + '?text=' + encodeURIComponent(texto), '_blank');
+}
+function respLimpiar() {
+  RESP_CAMPOS.forEach(function (c) {
+    var el = document.getElementById(c[0]);
+    if (el) { el.value = ''; el.classList.remove('campo-falta'); }
+  });
+}
+document.getElementById('fResp-wa').addEventListener('input', function (e) {
+  try { localStorage.setItem(RESP_WA_KEY, e.target.value); } catch (err) {}
+});
+// Quitar la marca roja al escribir o cambiar el campo (patrón 255).
+['input', 'change'].forEach(function (ev) {
+  document.getElementById('respFormBox').addEventListener(ev, function (e) {
+    var t = e.target;
+    if (!t || !t.classList) return;
+    t.classList.remove('campo-falta');
+  });
+});
+document.getElementById('btnRespEnviar').addEventListener('click', function () { respEnviar(); });
+document.getElementById('btnRespLimpiar').addEventListener('click', function () { respLimpiar(); });
+respCargarWa();
 document.getElementById('btnMantGuardar').addEventListener('click', function () { mantGuardarBorrador(); });
 document.getElementById('btnMantCancelar').addEventListener('click', function () { mantCancelarForm(); });
 document.getElementById('btnMantFirmaLimpiar').addEventListener('click', function () { mantClearFirmaCanvas(); });
@@ -5351,6 +5441,7 @@ function showVista(v) {
   document.getElementById('viewRenta-rec').hidden = v !== 'rec';
   document.getElementById('viewRenta-for').hidden = v !== 'for';
   document.getElementById('viewMant').hidden = v !== 'mant';
+  document.getElementById('viewResp').hidden = v !== 'resp';
   document.getElementById('viewUsuarios').hidden = v !== 'usuarios';
   document.getElementById('viewEquipo').hidden = v !== 'equipo';
   document.getElementById('viewCuenta').hidden = true;
@@ -5359,6 +5450,7 @@ function showVista(v) {
   if (v === 'equipo') { renderEquipo(); refreshTeamUsers(); }
   if (v === 'preparar') prefillTecnico();
   if (v === 'mant') { prefillMantTecnico(); renderMant(); }
+  if (v === 'resp') { respCargarWa(); }
   document.querySelectorAll('#tabs .tab').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-v') === v); });
   window.scrollTo(0, 0);
 }
@@ -5836,7 +5928,7 @@ document.getElementById('btnEuGuardar').addEventListener('click', function () {
   });
 });
 document.getElementById('btnReportar').addEventListener('click', function () {
-  window.location.href = 'mailto:gerardo.cruzhz@linux.com?subject=' + encodeURIComponent('Reporte de problema - Checklist de Soporte 260') + '&body=' + encodeURIComponent('Describe el problema:\n\n\nVersión de la app: 260');
+  window.location.href = 'mailto:gerardo.cruzhz@linux.com?subject=' + encodeURIComponent('Reporte de problema - Checklist de Soporte 261') + '&body=' + encodeURIComponent('Describe el problema:\n\n\nVersión de la app: 261');
 });
 
 boot();
