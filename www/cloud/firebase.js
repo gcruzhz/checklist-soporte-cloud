@@ -500,6 +500,38 @@ async function guardarFirma(id, firmaData) {
   return updateDoc(doc(db, 'mantenimientos', id), { firma: firmaData, estado: 'firmada' });
 }
 
+// Responsivas en blanco (2.5.13): el técnico crea el documento (estado
+// 'pendiente', sin datos) y comparte el enlace público
+// responsiva.html?id=<id>; el colaborador lo llena sin sesión y la app
+// lo ve llegar por la suscripción. El id aleatorio del documento es el
+// secreto del enlace, igual que la firma de Mantenimientos.
+// uidOpcional filtra por creadoPor (lo usan los usuarios normales para
+// que las reglas permitan la lectura); sin él el admin suscribe todo.
+async function crearResponsiva(creadoPorNombre) {
+  const u = auth.currentUser;
+  if (!u) throw new Error('no-auth');
+  const ref = doc(collection(db, 'responsivas'));
+  await setDoc(ref, {
+    creadoPor: u.uid,
+    creadoPorNombre: creadoPorNombre || u.email || '',
+    creadoEn: Date.now(),
+    estado: 'pendiente',
+    datos: null
+  });
+  return ref.id;
+}
+
+function subscribeResponsivas(cb, uidOpcional) {
+  const q = uidOpcional
+    ? query(collection(db, 'responsivas'), where('creadoPor', '==', uidOpcional))
+    : collection(db, 'responsivas');
+  return onSnapshot(
+    q,
+    (snap) => cb(snap.docs.map((d) => Object.assign({ id: d.id }, d.data()))),
+    (err) => console.warn('[Cloud] Error en snapshot de responsivas:', err)
+  );
+}
+
 // Equipos detectados (2.3.3): el detector de escritorio reporta los equipos
 // que ve en la red (colección detectados) y los teléfonos los listan para
 // usarlos en un equipo nuevo o descartarlos. El id es info.machineId cuando
@@ -678,6 +710,8 @@ window.Cloud = {
   getAllMantenimientos,
   asignarFolio,
   guardarFirma,
+  crearResponsiva,
+  subscribeResponsivas,
   reportDetected,
   subscribeDetectados,
   deleteDetectado,

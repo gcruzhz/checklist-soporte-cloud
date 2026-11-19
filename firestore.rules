@@ -147,6 +147,34 @@ service cloud.firestore {
       allow delete: if isActive() && (isAdmin() || resource.data.tecnicoUid == request.auth.uid);
     }
 
+    // Responsivas (2.5.13): el técnico envía el formulario en blanco
+    // por WhatsApp y el colaborador lo llena en responsiva.html (sin
+    // sesión). Un usuario normal solo ve las que creó (creadoPor
+    // propio); el admin ve todas. La lectura por id es pública para
+    // que la página (sin sesión) pueda mostrar el formulario: el id
+    // del documento es el secreto — cualquiera que lo conozca puede
+    // leer esa responsiva y llenarla. Crear: usuario activo con su
+    // propio creadoPor y estado 'pendiente'. Actualizar: admin o
+    // propio, o el llenado público que solo toca 'datos', 'estado' (a
+    // 'llenada') y 'llenadoEn', con los 6 campos de datos no vacíos.
+    // Borrar: admin o propio.
+    match /responsivas/{id} {
+      allow list: if isActive() && (isAdmin() || resource.data.creadoPor == request.auth.uid);
+      allow get: if true;
+      allow create: if isActive() && request.resource.data.creadoPor == request.auth.uid
+        && request.resource.data.estado == 'pendiente';
+      allow update: if (isActive() && (isAdmin() || resource.data.creadoPor == request.auth.uid))
+        || (request.resource.data.diff(resource.data).changedKeys().hasOnly(['datos', 'estado', 'llenadoEn'])
+          && request.resource.data.estado == 'llenada'
+          && request.resource.data.datos.nombre is string && request.resource.data.datos.nombre.size() > 0
+          && request.resource.data.datos.colaborador is string && request.resource.data.datos.colaborador.size() > 0
+          && request.resource.data.datos.sucursal is string && request.resource.data.datos.sucursal.size() > 0
+          && request.resource.data.datos.puesto is string && request.resource.data.datos.puesto.size() > 0
+          && request.resource.data.datos.jefe is string && request.resource.data.datos.jefe.size() > 0
+          && request.resource.data.datos.area is string && request.resource.data.datos.area.size() > 0);
+      allow delete: if isActive() && (isAdmin() || resource.data.creadoPor == request.auth.uid);
+    }
+
     // Folios de órdenes de servicio (2.5.0): config/folios.siguiente es el
     // próximo folio a asignar (empieza en 1). Leer: usuarios activos.
     // Crear: usuario activo con siguiente entero. Actualizar: solo subir

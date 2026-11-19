@@ -1,9 +1,70 @@
 # Changelog — Checklist de Soporte (nube)
 
-Resumen por versión, 2.0.0 → 2.5.12. Fuentes: el historial registrado
+Resumen por versión, 2.0.0 → 2.5.13. Fuentes: el historial registrado
 del proyecto (memoria 2026-11-12 a 2026-11-17) y las series de tests
 (`tests/test20*.js`). Las versiones 2.0.1–2.0.4 no tienen registro y
 no se documentan con supuestos.
+
+## 2.5.13 — 2026-11-19
+
+- **Vista «Responsiva»: enviar el formulario EN BLANCO por WhatsApp
+  (mismo patrón que la firma de Mantenimientos).** Botón nuevo
+  «📤 Enviar formulario en blanco» (`#btnRespBlanco`): crea el
+  documento en la colección nueva `responsivas` (estado `pendiente`,
+  sin datos, `creadoPor` = uid actual, `creadoPorNombre` = nombre del
+  técnico) y abre `wa.me/?text=` con el enlace
+  `https://checklist-soporte.web.app/responsiva.html?id=<id>` para
+  elegir el contacto (el destinatario es el colaborador, no el número
+  guardado); toast «Responsiva creada, elige el contacto en
+  WhatsApp». Sin nube avisa con toast y no abre nada. Nueva página
+  pública `hosting/public/responsiva.html` (mismo estilo que
+  `firma.html`, sin login): lee `?id=`, si no existe muestra «No se
+  encontró la responsiva», si ya está llenada muestra «Esta
+  responsiva ya fue llenada» con los datos, si está pendiente muestra
+  el formulario con los 6 campos (todos obligatorios, mismo orden que
+  la app) y al enviar guarda `datos` + `estado: 'llenada'` +
+  `llenadoEn`, con confirmación y botón Cerrar (mismo patrón que
+  `firma.html`). Nueva sección «Responsivas enviadas» (`#respList`,
+  suscrita en vivo con `subscribeResponsivas`: admin ve todas,
+  usuario normal solo las que creó): cada tarjeta muestra estado
+  (Pendiente / Llenada + fecha) y quién la creó; la llenada trae los
+  6 datos y los botones «📲 Compartir por WhatsApp» (texto con los 6
+  datos), «✉️ Enviar por correo» (mailto «Responsiva: <nombre>») y
+  «💾 Guardar en Excel» (.xlsx real con el patrón
+  `buildXlsxFromTable`; Capacitor Share si está, si no descarga por
+  `<a>`, si no toast honesto); la pendiente trae «🔗 Copiar enlace»
+  (portapapeles, o wa.me con el enlace si no hay). La lista se
+  actualiza sola cuando el colaborador llena el formulario. El
+  formulario directo del técnico (2.5.11/2.5.12, con borrador local)
+  sigue intacto.
+- `crearResponsiva` y `subscribeResponsivas` en
+  `www/cloud/firebase.js` (expuestas en `window.Cloud`); bloque nuevo
+  `responsivas` en `firestore.rules` (list propio/admin, get público
+  por id, create propio con estado `pendiente`, update propio/admin O
+  público restringido a `datos`+`estado`+`llenadoEn` con estado
+  `llenada` y los 6 campos no vacíos, delete propio/admin).
+  **PENDIENTE para Gerardo: publicar ese bloque de reglas en la
+  consola de Firebase y desplegar `responsiva.html` en Hosting (con
+  login fresco); sin esos dos pasos el enlace todavía no funciona en
+  vivo.** El bundle de Firebase cambia esta vez: md5 nuevo
+  `de3d2dce1924710dc8458d10f47a1c45` (506 783 B), mismo en APK y
+  escritorio.
+- Tests `test20263.js`: **876 true / 0 false** (861 de 2.5.12 + 15
+  nuevas de la serie 263: botón y lista en HTML, funciones en la app,
+  firebase.js y reglas; sin nube avisa y no abre nada; crea con el
+  nombre del técnico y abre wa.me con el enlace; suscripción con uid
+  propio y lista con pendiente y llenada; dispatch: copiar enlace,
+  WhatsApp, correo y Excel .xlsx con los 6 datos; la lista se
+  actualiza sola al llenarse; el formulario directo sigue intacto).
+  `responsiva.html` verificada en local con Firebase simulado (sin
+  tocar Firestore real): 8/8 (sin id, pendiente, envío vacío bloquea,
+  envío lleno guarda, ya llenada, inexistente, colección correcta).
+  El parche web y el de tests son reproducibles
+  (`tests/patch_20263_web.py`, `tests/patch_test_20263.py`).
+- APK 2.5.13 (versionCode 67): 15 771 981 B, md5
+  `b875849f6e965a0f51cad3b17edb47e2`, firma permanente verificada
+  (apksigner v2, 1 firmante), bundle nuevo dentro.
+  Escritorio 2.5.13 en el CHANGELOG del repo desktop.
 
 ## 2.5.12 — 2026-11-19
 

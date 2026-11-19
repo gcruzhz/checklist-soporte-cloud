@@ -52,9 +52,16 @@ Los PDF y el Excel se generan con código propio, sin librerías de diseño.
   entrega un .exe portable en ZIP); iOS necesita una Mac; los archivos de
   Windows van sin firmar por decisión de Gerardo.
 - **Cómo se prueba todo:** en teléfono y PC reales (ver `docs/TESTING.md`).
-  Pendiente de probar en 2.5.12: el flujo completo de la Responsiva
-  con datos reales (llenar, guardar y cerrar, reabrir, enviar por
-  WhatsApp). Pendiente de probar en 2.5.10: el compartir acortado por
+  Pendiente de probar en 2.5.13: el flujo completo de la Responsiva
+  en blanco con un colaborador real (enviar en blanco por WhatsApp,
+  que lo llene en la página, que aparezca llenada en la app, guardar
+  en Excel), en teléfono y en escritorio. **PENDIENTE (lo hace
+  Gerardo): publicar el bloque nuevo `responsivas` de
+  `firestore.rules` en la consola de Firebase y desplegar
+  `responsiva.html` en Hosting con login fresco; sin esos dos pasos
+  el enlace todavía no funciona en vivo.** Pendiente de probar en
+  2.5.12: el flujo completo de la Responsiva directa con datos reales
+  (llenar, guardar y cerrar, reabrir, enviar por WhatsApp). Pendiente de probar en 2.5.10: el compartir acortado por
   WhatsApp
   (hasta Impresora) y el correo completo desde un equipo detectado
   real, en teléfono y en escritorio. Pendiente de probar en 2.5.8: la
@@ -71,8 +78,8 @@ Los PDF y el Excel se generan con código propio, sin librerías de diseño.
 - Nube: https://github.com/gcruzhz/checklist-soporte-cloud
 - Escritorio: https://github.com/gcruzhz/checklist-soporte-desktop
 - Paquete completo para devs (código + docs + binarios que no van a
-  GitHub): ZIP 2.5.12 en Drive —
-  https://drive.google.com/file/d/1sx32yCns_pdKlI0tnZosBwgPHNEsQV7o/view?usp=drivesdk
+  GitHub): ZIP 2.5.13 en Drive —
+  https://drive.google.com/file/d/1NUvRNJvt89WmNHGjcHaZlK2aDXEIADmj/view?usp=drivesdk
 - En cada repo: `docs/CHANGELOG.md` (historial por versión),
   `docs/SETUP_FIREBASE.md` (cómo levantar el backend),
   `docs/DATA_MODEL.md` (colecciones de Firestore),

@@ -180,7 +180,7 @@
     <img class="login-logo" src="lab-icon.png" alt="Checklist de Soporte">
     <h1>Checklist de Soporte</h1>
     <p class="login-sub">Ingresa con tu usuario para ver y registrar equipos.</p>
-    <p class="login-sub" style="font-size:11px;color:#999">Versión 2.5.12</p>
+    <p class="login-sub" style="font-size:11px;color:#999">Versión 2.5.13</p>
     <div id="loginBox">
       <form id="loginForm">
         <div class="field"><label>Usuario o correo</label><input id="loginEmail" type="text" placeholder="usuario o tu@correo.com" autocomplete="username"></div>
@@ -419,7 +419,7 @@
   <div class="card">
     <b>Acerca de</b>
     <div class="line">App: Checklist de Soporte</div>
-    <div class="line">Versión: 2.5.12</div>
+    <div class="line">Versión: 2.5.13</div>
     <div class="line" id="focusDiag">Foco: — · Elemento activo: —</div>
     <div class="line">Contacto: <a href="mailto:gerardo.cruzhz@linux.com">gerardo.cruzhz@linux.com</a></div>
     <div class="sub">© Gerardo Cruz Hernandez</div>
@@ -584,9 +584,15 @@
       <div class="share-note">El número de WhatsApp se guarda solo en este teléfono, no se manda a la nube. Si está vacío, al enviar se te pedirá elegir el contacto en WhatsApp.</div>
       <div class="actions">
         <button class="btn-green" id="btnRespEnviar">📲 Enviar por WhatsApp</button>
+        <button class="btn-green" id="btnRespBlanco">📤 Enviar formulario en blanco</button>
         <button class="btn-ghost" id="btnRespGuardar">💾 Guardar y cerrar</button>
         <button class="btn-ghost" id="btnRespLimpiar">Limpiar</button>
       </div>
+    </div>
+    <div class="panel">
+      <b>Responsivas enviadas</b>
+      <div class="share-note">Las responsivas en blanco que enviaste por WhatsApp. Cuando el colaborador llena el formulario en la página, aparece aquí como «Llenada» con sus datos; no hace falta recargar.</div>
+      <div id="respList"><div class="empty">Aún no hay responsivas enviadas.</div></div>
     </div>
   </div>
   <div id="viewUsuarios" hidden>
@@ -1487,6 +1493,13 @@ async function onAuthChanged(user) {
           var mo = mantFind(mantOrderId);
           if (mo) { mantFillFromFirma(mo); renderMantOrder(mo); }
         }
+      }, cloudRole === 'admin' ? null : (cloudUser ? cloudUser.uid : null));
+    }
+    if (window.Cloud.subscribeResponsivas) {
+      if (cloudRespUnsub) cloudRespUnsub();
+      cloudRespUnsub = window.Cloud.subscribeResponsivas(function (docs) {
+        responsivas = docs || [];
+        renderRespList();
       }, cloudRole === 'admin' ? null : (cloudUser ? cloudUser.uid : null));
     }
     if (window.Cloud.subscribeUserDoc) {
@@ -5385,6 +5398,137 @@ function respLimpiar() {
     if (el) { el.value = ''; el.classList.remove('campo-falta'); }
   });
 }
+// (263) Responsivas en blanco por WhatsApp: mismo patrón que la firma
+// de Mantenimientos (firma.html). Se crea el documento en Firestore
+// (estado 'pendiente', sin datos) y se comparte el enlace público
+// responsiva.html?id=<id> para elegir el contacto en WhatsApp; el
+// colaborador lo llena en la página web y la lista se actualiza sola
+// por la suscripción. Nada de borrador local para esto: el documento
+// vive en la nube desde que se crea.
+var RESP_URL_BASE = 'https://checklist-soporte.web.app/responsiva.html';
+var responsivas = [];
+var cloudRespUnsub = null;
+var RESP_DATOS_KEYS = {
+  'fResp-nombre': 'nombre',
+  'fResp-colaborador': 'colaborador',
+  'fResp-sucursal': 'sucursal',
+  'fResp-puesto': 'puesto',
+  'fResp-jefe': 'jefe',
+  'fResp-area': 'area'
+};
+function respUrl(r) { return RESP_URL_BASE + '?id=' + encodeURIComponent(r.id); }
+function respDatosTexto(r) {
+  var d = (r && r.datos) || {};
+  var lines = ['Responsiva — Checklist de Soporte'];
+  RESP_CAMPOS.forEach(function (c) {
+    lines.push(c[1] + ': ' + (d[RESP_DATOS_KEYS[c[0]]] || ''));
+  });
+  return lines.join('\n');
+}
+function respSuscribir() {
+  if (!CLOUD_ENABLED || !window.Cloud || !window.Cloud.subscribeResponsivas) return;
+  if (cloudRespUnsub) return;
+  cloudRespUnsub = window.Cloud.subscribeResponsivas(function (docs) {
+    responsivas = docs || [];
+    renderRespList();
+  }, cloudRole === 'admin' ? null : (cloudUser ? cloudUser.uid : null));
+}
+function respEnviarEnBlanco() {
+  if (!CLOUD_ENABLED || !window.Cloud || !window.Cloud.crearResponsiva) {
+    showToast('La responsiva en blanco necesita conexión a la nube.');
+    return Promise.resolve(false);
+  }
+  return Promise.resolve(window.Cloud.crearResponsiva(technicianName())).then(function (id) {
+    if (!id) { showToast('No se pudo crear la responsiva.'); return false; }
+    var url = RESP_URL_BASE + '?id=' + encodeURIComponent(id);
+    window.open('https://wa.me/?text=' + encodeURIComponent('Hola, llena tu responsiva de Checklist de Soporte aquí: ' + url), '_blank');
+    showToast('Responsiva creada, elige el contacto en WhatsApp.');
+    return true;
+  }).catch(function () {
+    showToast('No se pudo crear la responsiva. Revisa tu conexión.');
+    return false;
+  });
+}
+function respEstadoLabel(r) {
+  if (r.estado === 'llenada') return 'Llenada' + (r.llenadoEn ? ' · ' + fmtDate(r.llenadoEn) : '');
+  return 'Pendiente';
+}
+function renderRespList() {
+  var box = document.getElementById('respList');
+  if (!box) return;
+  if (!responsivas.length) { box.innerHTML = '<div class="empty">Aún no hay responsivas enviadas.</div>'; return; }
+  var list = responsivas.slice().sort(function (a, b) { return (b.creadoEn || 0) - (a.creadoEn || 0); });
+  box.innerHTML = list.map(function (r) {
+    var llenada = r.estado === 'llenada' && r.datos;
+    var html = '<div class="card"><b>Responsiva · ' + esc(respEstadoLabel(r)) + '</b>' +
+      '<div class="sub">Creada por ' + esc(r.creadoPorNombre || '—') + (r.creadoEn ? ' · ' + fmtDate(r.creadoEn) : '') + '</div>';
+    if (llenada) {
+      html += '<div class="sub">' + RESP_CAMPOS.map(function (c) {
+        return esc(c[1]) + ': ' + esc(r.datos[RESP_DATOS_KEYS[c[0]]] || '—');
+      }).join('<br>') + '</div>';
+      html += '<div class="actions"><button class="btn-green" data-resp-wa="' + esc(r.id) + '">📲 Compartir por WhatsApp</button>' +
+        '<button class="btn-dark" data-resp-mail="' + esc(r.id) + '">✉️ Enviar por correo</button>' +
+        '<button class="btn-dark" data-resp-xlsx="' + esc(r.id) + '">💾 Guardar en Excel</button></div>';
+    } else {
+      html += '<div class="sub">Pendiente de llenar por el colaborador.</div>' +
+        '<div class="actions"><button class="btn-dark" data-resp-copy="' + esc(r.id) + '">🔗 Copiar enlace</button></div>';
+    }
+    return html + '</div>';
+  }).join('');
+}
+function respEnviarCorreo(r) {
+  var d = (r && r.datos) || {};
+  window.location.href = 'mailto:?subject=' + encodeURIComponent('Responsiva: ' + (d.nombre || '')) + '&body=' + encodeURIComponent(respDatosTexto(r));
+}
+function respCopiarEnlace(r) {
+  var url = respUrl(r);
+  var texto = 'Llena tu responsiva de Checklist de Soporte aquí: ' + url;
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      Promise.resolve(navigator.clipboard.writeText(url)).then(function () {
+        showToast('Enlace copiado.');
+      }).catch(function () {
+        window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank');
+      });
+      return;
+    }
+  } catch (e) {}
+  window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank');
+}
+// Excel real (.xlsx) de una responsiva llenada, con el mismo patrón
+// buildXlsxFromTable que el resto de la app: Capacitor Share si está,
+// si no descarga por <a>, si no toast honesto.
+function respXlsxBlob(r) {
+  var d = (r && r.datos) || {};
+  var headers = ['Nombre Completo', 'Número de colaborador', 'Sucursal', 'Puesto', 'Jefe Directo', 'Área'];
+  var row = [d.nombre || '', d.colaborador || '', d.sucursal || '', d.puesto || '', d.jefe || '', d.area || ''];
+  return buildXlsxFromTable(headers, [row], 'Responsiva');
+}
+async function respGuardarExcel(r) {
+  var d = (r && r.datos) || {};
+  var name = 'responsiva-' + (cleanName(d.nombre) || 'colaborador') + '.xlsx';
+  var blob = respXlsxBlob(r);
+  try {
+    var Plugins = window.Capacitor && window.Capacitor.Plugins;
+    if (!Plugins || !Plugins.Filesystem || !Plugins.Share) throw new Error('share-no-disponible');
+    var base64 = await blobToBase64(blob);
+    var saved = await Plugins.Filesystem.writeFile({ path: name, data: base64, directory: 'CACHE' });
+    await Plugins.Share.share({
+      title: 'Checklist de Soporte',
+      text: 'Responsiva — Checklist de Soporte.',
+      url: saved.uri,
+      dialogTitle: 'Guardar en Excel'
+    });
+  } catch (e) {
+    try {
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = name;
+      a.click();
+      showToast('Excel descargado: ' + name);
+    } catch (e2) { showToast('No se pudo guardar el Excel.'); }
+  }
+}
 document.getElementById('fResp-wa').addEventListener('input', function (e) {
   try { localStorage.setItem(RESP_WA_KEY, e.target.value); } catch (err) {}
 });
@@ -5397,6 +5541,20 @@ document.getElementById('fResp-wa').addEventListener('input', function (e) {
   });
 });
 document.getElementById('btnRespEnviar').addEventListener('click', function () { respEnviar(); });
+document.getElementById('btnRespBlanco').addEventListener('click', function () { respEnviarEnBlanco(); });
+document.getElementById('respList').addEventListener('click', function (e) {
+  var t = e.target;
+  var q = function (attr) { var el = t.closest('[' + attr + ']'); return el ? el.getAttribute(attr) : null; };
+  var id = q('data-resp-wa') || q('data-resp-mail') || q('data-resp-xlsx') || q('data-resp-copy');
+  if (!id) return;
+  var r = null;
+  responsivas.forEach(function (x) { if (x.id === id) r = x; });
+  if (!r) return;
+  if (t.closest('[data-resp-wa]')) { shareText(respDatosTexto(r)); return; }
+  if (t.closest('[data-resp-mail]')) { respEnviarCorreo(r); return; }
+  if (t.closest('[data-resp-xlsx]')) { respGuardarExcel(r); return; }
+  if (t.closest('[data-resp-copy]')) { respCopiarEnlace(r); return; }
+});
 document.getElementById('btnRespGuardar').addEventListener('click', function () { respGuardarYCerrar(); });
 document.getElementById('btnRespLimpiar').addEventListener('click', function () { respLimpiar(); });
 respCargarWa();
@@ -5493,7 +5651,7 @@ function showVista(v) {
   if (v === 'equipo') { renderEquipo(); refreshTeamUsers(); }
   if (v === 'preparar') prefillTecnico();
   if (v === 'mant') { prefillMantTecnico(); renderMant(); }
-  if (v === 'resp') { respCargarWa(); respCargarBorrador(); }
+  if (v === 'resp') { respCargarWa(); respCargarBorrador(); respSuscribir(); renderRespList(); }
   document.querySelectorAll('#tabs .tab').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-v') === v); });
   window.scrollTo(0, 0);
 }
@@ -5971,7 +6129,7 @@ document.getElementById('btnEuGuardar').addEventListener('click', function () {
   });
 });
 document.getElementById('btnReportar').addEventListener('click', function () {
-  window.location.href = 'mailto:gerardo.cruzhz@linux.com?subject=' + encodeURIComponent('Reporte de problema - Checklist de Soporte 262') + '&body=' + encodeURIComponent('Describe el problema:\n\n\nVersión de la app: 262');
+  window.location.href = 'mailto:gerardo.cruzhz@linux.com?subject=' + encodeURIComponent('Reporte de problema - Checklist de Soporte 263') + '&body=' + encodeURIComponent('Describe el problema:\n\n\nVersión de la app: 263');
 });
 
 boot();

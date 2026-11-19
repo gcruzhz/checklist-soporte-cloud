@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Responsiva — Checklist de Soporte</title>
+<style>
+  :root{
+    --teal:#0f766e; --teal-dark:#0b5e57; --teal-light:#e6f4f1;
+    --orange:#ea7a1f; --ink:#1f2937; --muted:#6b7280; --line:#d1d5db;
+    --danger:#b91c1c; --danger-bg:#fef2f2; --ok:#15803d; --ok-bg:#f0fdf4;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  body{margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif; background:#f3f4f6; color:var(--ink);}
+  .wrap{max-width:560px; margin:0 auto; padding:16px 14px 48px;}
+  header{background:var(--teal); color:#fff; border-radius:14px; padding:18px 18px 14px; margin-bottom:14px;}
+  header h1{margin:0 0 4px; font-size:20px; line-height:1.25;}
+  header p{margin:0; font-size:13px; opacity:.92;}
+  .folio{font-size:12px; letter-spacing:.06em; text-transform:uppercase; opacity:.85;}
+  .card{background:#fff; border-radius:14px; padding:16px; margin-bottom:14px; box-shadow:0 1px 3px rgba(0,0,0,.08);}
+  .card h2{margin:0 0 10px; font-size:16px; color:var(--teal-dark);}
+  .row{display:flex; justify-content:space-between; gap:12px; padding:7px 0; border-bottom:1px solid #eef2f2; font-size:14px;}
+  .row:last-child{border-bottom:0;}
+  .row .k{color:var(--muted); flex:0 0 42%;}
+  .row .v{flex:1; text-align:right; font-weight:600; word-break:break-word;}
+  label{display:block; font-size:14px; font-weight:600; margin:14px 0 5px;}
+  label .req{color:var(--danger);}
+  label .opt{color:var(--muted); font-weight:400; font-size:12px;}
+  input[type=text], textarea{
+    width:100%; font-size:16px; padding:11px 12px; border:1.5px solid var(--line);
+    border-radius:10px; outline:none; background:#fff; color:var(--ink);
+  }
+  input[type=text]:focus, textarea:focus{border-color:var(--teal);}
+  input.invalid, textarea.invalid{border-color:var(--danger); background:var(--danger-bg);}
+  textarea{resize:vertical; min-height:76px;}
+  .hint{font-size:12px; color:var(--muted); margin-top:4px;}
+  /* Canvas de firma */
+  .sig-box{border:1.5px solid var(--line); border-radius:10px; background:#fff; overflow:hidden; position:relative;}
+  .sig-box.invalid{border-color:var(--danger); background:var(--danger-bg);}
+  .sig-box canvas{display:block; width:100%; height:180px; touch-action:none; cursor:crosshair;}
+  .sig-placeholder{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    color:#9ca3af; font-size:14px; pointer-events:none; text-align:center; padding:0 20px;
+  }
+  .sig-actions{display:flex; justify-content:flex-end; margin-top:8px;}
+  .btn-ghost{
+    background:#fff; color:var(--teal-dark); border:1.5px solid var(--teal);
+    border-radius:10px; padding:8px 16px; font-size:14px; font-weight:600; cursor:pointer;
+  }
+  /* Satisfacción 0-10 */
+  .scale{display:grid; grid-template-columns:repeat(11,1fr); gap:4px; margin-top:6px;}
+  .scale button{
+    aspect-ratio:1; border:1.5px solid var(--line); background:#fff; border-radius:8px;
+    font-size:14px; font-weight:700; color:var(--ink); cursor:pointer; padding:0;
+  }
+  .scale button.sel-bad{background:#b91c1c; border-color:#b91c1c; color:#fff;}
+  .scale button.sel-mid{background:#d97706; border-color:#d97706; color:#fff;}
+  .scale button.sel-good{background:var(--teal); border-color:var(--teal); color:#fff;}
+  .scale-labels{display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-top:6px;}
+  .scale-labels b{font-weight:700;}
+  .scale-labels .bad{color:#b91c1c;} .scale-labels .mid{color:#b45309;} .scale-labels .good{color:var(--teal-dark);}
+  /* Avisos y botones */
+  .alert{display:none; border-radius:10px; padding:12px 14px; font-size:14px; margin-bottom:14px; line-height:1.45;}
+  .alert.show{display:block;}
+  .alert.err{background:var(--danger-bg); color:var(--danger); border:1px solid #fecaca;}
+  .alert.err ul{margin:6px 0 0; padding-left:20px;}
+  .alert.ok{background:var(--ok-bg); color:var(--ok); border:1px solid #bbf7d0;}
+  .btn-primary{
+    width:100%; background:var(--teal); color:#fff; border:0; border-radius:12px;
+    padding:15px; font-size:17px; font-weight:700; cursor:pointer; margin-top:6px;
+  }
+  .btn-primary:disabled{background:#9ca3af; cursor:wait;}
+  .btn-primary.orange{background:var(--orange);}
+  .center{text-align:center;}
+  .loading{color:var(--muted); font-size:14px; padding:28px 0;}
+  .spinner{width:28px; height:28px; border:3px solid var(--teal-light); border-top-color:var(--teal); border-radius:50%; margin:0 auto 10px; animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .sig-img{max-width:100%; border:1px solid var(--line); border-radius:10px; background:#fff;}
+  .foot{font-size:12px; color:var(--muted); text-align:center; margin-top:18px; line-height:1.5;}
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="folio" id="folioTop">Checklist de Soporte</div>
+    <h1>Responsiva</h1>
+    <p>Llena tus datos para la responsiva del equipo.</p>
+  </header>
+
+  <!-- Cargando -->
+  <div id="viewLoading" class="card center">
+    <div class="loading"><div class="spinner"></div>Cargando la responsiva…</div>
+  </div>
+
+  <!-- Error -->
+  <div id="viewError" class="card hidden">
+    <div class="alert err show" id="errorText"></div>
+    <p class="hint center">Si el enlace te llegó por WhatsApp, ábrelo de nuevo desde el mensaje original. Si el problema continúa, avisa al técnico.</p>
+  </div>
+
+  <!-- Ya llenada -->
+  <div id="viewFilled" class="hidden">
+    <div class="card">
+      <div class="alert ok show">✔ Esta responsiva ya fue llenada. No es necesario llenarla de nuevo.</div>
+      <h2>Datos registrados</h2>
+      <div id="filledData"></div>
+      <div style="margin-top:14px;"><button type="button" class="btn-primary orange" id="btnCerrarFilled">Cerrar</button><p class="hint center hidden" id="closeHintFilled">Ya puedes cerrar esta ventana.</p></div>
+    </div>
+  </div>
+
+  <!-- Formulario -->
+  <div id="viewForm" class="hidden">
+    <div class="card">
+      <h2>Tus datos</h2>
+      <div id="formAlert" class="alert err" role="alert"></div>
+
+      <form id="respForm" novalidate>
+        <label for="nombre">Nombre Completo <span class="req">*</span></label>
+        <input type="text" id="nombre" autocomplete="name" placeholder="Nombre completo del colaborador">
+
+        <label for="colaborador">Número de colaborador <span class="req">*</span></label>
+        <input type="text" id="colaborador" autocomplete="off" placeholder="Número de colaborador">
+
+        <label for="sucursal">Sucursal <span class="req">*</span></label>
+        <input type="text" id="sucursal" autocomplete="off" placeholder="Sucursal">
+
+        <label for="puesto">Puesto <span class="req">*</span></label>
+        <input type="text" id="puesto" autocomplete="off" placeholder="Puesto">
+
+        <label for="jefe">Jefe Directo <span class="req">*</span></label>
+        <input type="text" id="jefe" autocomplete="off" placeholder="Nombre del jefe directo">
+
+        <label for="area">Área <span class="req">*</span></label>
+        <input type="text" id="area" autocomplete="off" placeholder="Área">
+
+        <button type="submit" class="btn-primary" id="btnSubmit">Enviar responsiva</button>
+        <p class="hint center">Los campos marcados con <span style="color:var(--danger); font-weight:700;">*</span> son obligatorios.</p>
+      </form>
+    </div>
+  </div>
+
+  <!-- Confirmación -->
+  <div id="viewDone" class="hidden">
+    <div class="card center">
+      <div class="alert ok show" style="font-size:16px;">✔ Gracias, tu responsiva quedó registrada.</div>
+      <p style="font-size:14px; color:var(--muted);">El técnico ya puede ver tus datos. Puedes cerrar esta página.</p>
+      <div id="doneData" style="text-align:left;"></div>
+      <div style="margin-top:14px;"><button type="button" class="btn-primary orange" id="btnCerrarDone">Cerrar</button><p class="hint center hidden" id="closeHintDone">Ya puedes cerrar esta ventana.</p></div>
+    </div>
+  </div>
+
+  <p class="foot">Checklist de Soporte · Esta página no requiere cuenta ni aplicación.<br>Tus datos solo se usan para la responsiva del equipo.</p>
+</div>
+
+<!-- SDK web de Firebase (compat) + config del proyecto -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="./firebase-config.js"></script>
+<script>
+(function(){
+  'use strict';
+
+  var $ = function(id){ return document.getElementById(id); };
+
+  // ---------- Estado ----------
+  var docId = null, docRef = null, db = null;
+  var enviando = false;
+  var CAMPOS = [
+    ['nombre', 'Nombre Completo'],
+    ['colaborador', 'Número de colaborador'],
+    ['sucursal', 'Sucursal'],
+    ['puesto', 'Puesto'],
+    ['jefe', 'Jefe Directo'],
+    ['area', 'Área']
+  ];
+
+  // ---------- Vistas ----------
+  function show(id){
+    ['viewLoading','viewError','viewFilled','viewForm','viewDone'].forEach(function(v){
+      $(v).classList.toggle('hidden', v !== id);
+    });
+  }
+  function showError(msg){
+    $('errorText').textContent = msg;
+    show('viewError');
+  }
+
+  // ---------- Formato ----------
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function fmtFechaHora(v){
+    if(!v) return '—';
+    try{
+      var d = (typeof v.toDate === 'function') ? v.toDate() : new Date(v);
+      if(isNaN(d.getTime())) return esc(String(v));
+      return d.toLocaleString('es-MX', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
+    }catch(e){ return esc(String(v)); }
+  }
+
+  // ---------- Datos ----------
+  function renderDatos(d, llenadoEn){
+    var filas = CAMPOS.map(function(c){ return [c[1], d[c[0]] || '—']; });
+    if(llenadoEn) filas.push(['Llenada el', fmtFechaHora(llenadoEn)]);
+    $('filledData').innerHTML = filas.map(function(f){
+      return '<div class="row"><span class="k">' + esc(f[0]) + '</span><span class="v">' + esc(f[1]) + '</span></div>';
+    }).join('');
+  }
+
+  // ---------- Validación (los 6 campos son obligatorios) ----------
+  function validar(){
+    var faltantes = [];
+    var datos = {};
+    CAMPOS.forEach(function(c){
+      var el = $(c[0]);
+      var v = el.value.trim();
+      el.classList.toggle('invalid', !v);
+      if(!v) faltantes.push(c[1]);
+      datos[c[0]] = v;
+    });
+    var alert = $('formAlert');
+    if(faltantes.length){
+      alert.innerHTML = '<b>Faltan datos obligatorios:</b><ul>' +
+        faltantes.map(function(f){ return '<li>' + esc(f) + '</li>'; }).join('') +
+        '</ul>Completa los campos marcados para poder enviar tu responsiva.';
+      alert.classList.add('show');
+      if(typeof alert.scrollIntoView === 'function'){
+        alert.scrollIntoView({behavior:'smooth', block:'center'});
+      }
+      return null;
+    }
+    alert.classList.remove('show');
+    alert.innerHTML = '';
+    return datos;
+  }
+  CAMPOS.forEach(function(c){
+    $(c[0]).addEventListener('input', function(){ this.classList.remove('invalid'); });
+  });
+
+  // ---------- Envío ----------
+  $('respForm').addEventListener('submit', function(ev){
+    ev.preventDefault();
+    if(enviando) return;
+    var datos = validar();
+    if(!datos) return; // bloqueado: falta al menos un campo
+    enviando = true;
+    var btn = $('btnSubmit');
+    btn.disabled = true;
+    btn.textContent = 'Enviando…';
+
+    docRef.update({
+      datos: datos,
+      estado: 'llenada',
+      llenadoEn: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(function(){
+      renderDatos(datos, new Date());
+      $('doneData').innerHTML = $('filledData').innerHTML;
+      show('viewDone');
+      try{ window.scrollTo({top: 0, behavior: 'smooth'}); }catch(e){}
+    }).catch(function(err){
+      console.error('[responsiva] Error al guardar:', err);
+      var alert = $('formAlert');
+      var msg = 'No se pudo guardar tu responsiva. Revisa tu conexión e inténtalo de nuevo.';
+      if(err && err.code === 'permission-denied'){
+        msg = 'No se pudo guardar tu responsiva (permiso denegado). Avísale al técnico para que revise el enlace.';
+      }
+      alert.textContent = msg;
+      alert.classList.add('show');
+      btn.disabled = false;
+      btn.textContent = 'Enviar responsiva';
+      enviando = false;
+    });
+  });
+
+  // ---------- Cerrar (mismo patrón que firma.html) ----------
+  function cerrarPagina(){
+    try{ if(typeof window.close === 'function') window.close(); }catch(e){}
+    setTimeout(function(){
+      ['closeHintFilled', 'closeHintDone'].forEach(function(id){
+        var h = $(id); if(h) h.classList.remove('hidden');
+      });
+    }, 800);
+  }
+  $('btnCerrarFilled').addEventListener('click', cerrarPagina);
+  $('btnCerrarDone').addEventListener('click', cerrarPagina);
+
+  // ---------- Arranque ----------
+  function init(){
+    var params = new URLSearchParams(window.location.search);
+    docId = params.get('id');
+    if(!docId){
+      showError('Falta el identificador de la responsiva en el enlace. Abre el enlace completo que te compartió el técnico.');
+      return;
+    }
+    if(!window.FIREBASE_CONFIG || !window.firebase){
+      showError('No se pudo cargar el servicio de responsiva. Revisa tu conexión e inténtalo de nuevo.');
+      return;
+    }
+    try{
+      if(!firebase.apps.length) firebase.initializeApp(window.FIREBASE_CONFIG);
+    }catch(e){
+      showError('No se pudo iniciar el servicio de responsiva. Inténtalo de nuevo.');
+      return;
+    }
+    db = firebase.firestore();
+    docRef = db.collection('responsivas').doc(docId);
+    docRef.get().then(function(snap){
+      if(!snap.exists){
+        showError('No se encontró la responsiva. Es posible que el enlace esté incompleto o la responsiva ya no exista.');
+        return;
+      }
+      var d = snap.data() || {};
+      if(d.estado === 'llenada' && d.datos){
+        // Ya llenada: se muestra y no se permite llenarla dos veces.
+        renderDatos(d.datos, d.llenadoEn);
+        show('viewFilled');
+      } else {
+        show('viewForm');
+      }
+    }).catch(function(err){
+      console.error('[responsiva] Error al cargar:', err);
+      if(err && err.code === 'permission-denied'){
+        showError('No tienes permiso para ver esta responsiva. Pídele al técnico que te comparta de nuevo el enlace.');
+      } else {
+        showError('No se pudo cargar la responsiva. Revisa tu conexión e inténtalo de nuevo.');
+      }
+    });
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>
