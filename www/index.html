@@ -180,7 +180,7 @@
     <img class="login-logo" src="lab-icon.png" alt="Checklist de Soporte">
     <h1>Checklist de Soporte</h1>
     <p class="login-sub">Ingresa con tu usuario para ver y registrar equipos.</p>
-    <p class="login-sub" style="font-size:11px;color:#999">Versión 2.5.13</p>
+    <p class="login-sub" style="font-size:11px;color:#999">Versión 2.5.14</p>
     <div id="loginBox">
       <form id="loginForm">
         <div class="field"><label>Usuario o correo</label><input id="loginEmail" type="text" placeholder="usuario o tu@correo.com" autocomplete="username"></div>
@@ -419,7 +419,7 @@
   <div class="card">
     <b>Acerca de</b>
     <div class="line">App: Checklist de Soporte</div>
-    <div class="line">Versión: 2.5.13</div>
+    <div class="line">Versión: 2.5.14</div>
     <div class="line" id="focusDiag">Foco: — · Elemento activo: —</div>
     <div class="line">Contacto: <a href="mailto:gerardo.cruzhz@linux.com">gerardo.cruzhz@linux.com</a></div>
     <div class="sub">© Gerardo Cruz Hernandez</div>
@@ -582,6 +582,7 @@
       <div class="field"><label>Área *</label><input id="fResp-area" placeholder="Área"></div>
       <div class="field"><label>Número de WhatsApp para enviar el formulario</label><input id="fResp-wa" type="tel" placeholder="Ej. 5512345678 (10 dígitos)"></div>
       <div class="share-note">El número de WhatsApp se guarda solo en este teléfono, no se manda a la nube. Si está vacío, al enviar se te pedirá elegir el contacto en WhatsApp.</div>
+      <div class="share-note">Por favor llena tus datos para crear tu responsiva</div>
       <div class="actions">
         <button class="btn-green" id="btnRespEnviar">📲 Enviar por WhatsApp</button>
         <button class="btn-green" id="btnRespBlanco">📤 Enviar formulario en blanco</button>
@@ -593,6 +594,14 @@
       <b>Responsivas enviadas</b>
       <div class="share-note">Las responsivas en blanco que enviaste por WhatsApp. Cuando el colaborador llena el formulario en la página, aparece aquí como «Llenada» con sus datos; no hace falta recargar.</div>
       <div id="respList"><div class="empty">Aún no hay responsivas enviadas.</div></div>
+    </div>
+    <div class="panel">
+      <button class="btn-ghost" id="btnRespVerAnt">📂 Ver responsivas anteriores</button>
+      <div id="respArchBox" hidden>
+        <b>Responsivas archivadas</b>
+        <div class="share-note">Archivar no borra nada: la responsiva se puede restaurar a la lista principal.</div>
+        <div id="respArchList"></div>
+      </div>
     </div>
   </div>
   <div id="viewUsuarios" hidden>
@@ -5407,6 +5416,7 @@ function respLimpiar() {
 // vive en la nube desde que se crea.
 var RESP_URL_BASE = 'https://checklist-soporte.web.app/responsiva.html';
 var responsivas = [];
+var respMostrarArchivadas = false;
 var cloudRespUnsub = null;
 var RESP_DATOS_KEYS = {
   'fResp-nombre': 'nombre',
@@ -5441,7 +5451,7 @@ function respEnviarEnBlanco() {
   return Promise.resolve(window.Cloud.crearResponsiva(technicianName())).then(function (id) {
     if (!id) { showToast('No se pudo crear la responsiva.'); return false; }
     var url = RESP_URL_BASE + '?id=' + encodeURIComponent(id);
-    window.open('https://wa.me/?text=' + encodeURIComponent('Hola, llena tu responsiva de Checklist de Soporte aquí: ' + url), '_blank');
+    window.open('https://wa.me/?text=' + encodeURIComponent('Por favor llena tus datos para crear tu responsiva: ' + url), '_blank');
     showToast('Responsiva creada, elige el contacto en WhatsApp.');
     return true;
   }).catch(function () {
@@ -5453,28 +5463,66 @@ function respEstadoLabel(r) {
   if (r.estado === 'llenada') return 'Llenada' + (r.llenadoEn ? ' · ' + fmtDate(r.llenadoEn) : '');
   return 'Pendiente';
 }
+// (264) Tarjeta de responsiva: la activa trae «📥 Archivar», la
+// archivada trae «↩️ Restaurar» y la fecha de archivado. Mismos datos
+// y estado en ambas.
+function respCardHtml(r, archivada) {
+  var llenada = r.estado === 'llenada' && r.datos;
+  var html = '<div class="card"><b>Responsiva · ' + esc(respEstadoLabel(r)) + '</b>' +
+    '<div class="sub">Creada por ' + esc(r.creadoPorNombre || '—') + (r.creadoEn ? ' · ' + fmtDate(r.creadoEn) : '') + '</div>';
+  if (archivada) {
+    html += '<div class="sub">Archivada' + (r.archivadoEn ? ' · ' + fmtDate(r.archivadoEn) : '') + '</div>';
+  }
+  var finBtn = archivada
+    ? '<button class="btn-ghost" data-resp-restaurar="' + esc(r.id) + '">↩️ Restaurar</button>'
+    : '<button class="btn-ghost" data-resp-archivar="' + esc(r.id) + '">📥 Archivar</button>';
+  if (llenada) {
+    html += '<div class="sub">' + RESP_CAMPOS.map(function (c) {
+      return esc(c[1]) + ': ' + esc(r.datos[RESP_DATOS_KEYS[c[0]]] || '—');
+    }).join('<br>') + '</div>';
+    html += '<div class="actions"><button class="btn-green" data-resp-wa="' + esc(r.id) + '">📲 Compartir por WhatsApp</button>' +
+      '<button class="btn-dark" data-resp-mail="' + esc(r.id) + '">✉️ Enviar por correo</button>' +
+      '<button class="btn-dark" data-resp-xlsx="' + esc(r.id) + '">💾 Guardar en Excel</button>' + finBtn + '</div>';
+  } else {
+    html += '<div class="sub">Pendiente de llenar por el colaborador.</div>' +
+      '<div class="actions"><button class="btn-dark" data-resp-copy="' + esc(r.id) + '">🔗 Copiar enlace</button>' + finBtn + '</div>';
+  }
+  return html + '</div>';
+}
 function renderRespList() {
   var box = document.getElementById('respList');
   if (!box) return;
-  if (!responsivas.length) { box.innerHTML = '<div class="empty">Aún no hay responsivas enviadas.</div>'; return; }
-  var list = responsivas.slice().sort(function (a, b) { return (b.creadoEn || 0) - (a.creadoEn || 0); });
-  box.innerHTML = list.map(function (r) {
-    var llenada = r.estado === 'llenada' && r.datos;
-    var html = '<div class="card"><b>Responsiva · ' + esc(respEstadoLabel(r)) + '</b>' +
-      '<div class="sub">Creada por ' + esc(r.creadoPorNombre || '—') + (r.creadoEn ? ' · ' + fmtDate(r.creadoEn) : '') + '</div>';
-    if (llenada) {
-      html += '<div class="sub">' + RESP_CAMPOS.map(function (c) {
-        return esc(c[1]) + ': ' + esc(r.datos[RESP_DATOS_KEYS[c[0]]] || '—');
-      }).join('<br>') + '</div>';
-      html += '<div class="actions"><button class="btn-green" data-resp-wa="' + esc(r.id) + '">📲 Compartir por WhatsApp</button>' +
-        '<button class="btn-dark" data-resp-mail="' + esc(r.id) + '">✉️ Enviar por correo</button>' +
-        '<button class="btn-dark" data-resp-xlsx="' + esc(r.id) + '">💾 Guardar en Excel</button></div>';
-    } else {
-      html += '<div class="sub">Pendiente de llenar por el colaborador.</div>' +
-        '<div class="actions"><button class="btn-dark" data-resp-copy="' + esc(r.id) + '">🔗 Copiar enlace</button></div>';
+  var activas = responsivas.filter(function (r) { return !r.archivado; });
+  var archivadas = responsivas.filter(function (r) { return !!r.archivado; });
+  if (!activas.length) { box.innerHTML = '<div class="empty">Aún no hay responsivas enviadas.</div>'; }
+  else {
+    var list = activas.slice().sort(function (a, b) { return (b.creadoEn || 0) - (a.creadoEn || 0); });
+    box.innerHTML = list.map(function (r) { return respCardHtml(r, false); }).join('');
+  }
+  var archBox = document.getElementById('respArchBox');
+  var archList = document.getElementById('respArchList');
+  if (archBox) archBox.hidden = !respMostrarArchivadas;
+  if (archList) {
+    if (!respMostrarArchivadas) { archList.innerHTML = ''; }
+    else if (!archivadas.length) { archList.innerHTML = '<div class="empty">No hay responsivas archivadas.</div>'; }
+    else {
+      var alist = archivadas.slice().sort(function (a, b) { return (b.archivadoEn || b.creadoEn || 0) - (a.archivadoEn || a.creadoEn || 0); });
+      archList.innerHTML = alist.map(function (r) { return respCardHtml(r, true); }).join('');
     }
-    return html + '</div>';
-  }).join('');
+  }
+}
+function respArchivar(id, archivado) {
+  if (!CLOUD_ENABLED || !window.Cloud || !window.Cloud.archivarResponsiva) {
+    showToast('Archivar necesita conexión a la nube.');
+    return Promise.resolve(false);
+  }
+  return Promise.resolve(window.Cloud.archivarResponsiva(id, archivado)).then(function () {
+    showToast(archivado ? 'Responsiva archivada.' : 'Responsiva restaurada.');
+    return true;
+  }).catch(function () {
+    showToast(archivado ? 'No se pudo archivar la responsiva. Revisa tu conexión.' : 'No se pudo restaurar la responsiva. Revisa tu conexión.');
+    return false;
+  });
 }
 function respEnviarCorreo(r) {
   var d = (r && r.datos) || {};
@@ -5542,10 +5590,10 @@ document.getElementById('fResp-wa').addEventListener('input', function (e) {
 });
 document.getElementById('btnRespEnviar').addEventListener('click', function () { respEnviar(); });
 document.getElementById('btnRespBlanco').addEventListener('click', function () { respEnviarEnBlanco(); });
-document.getElementById('respList').addEventListener('click', function (e) {
+function respListClick(e) {
   var t = e.target;
   var q = function (attr) { var el = t.closest('[' + attr + ']'); return el ? el.getAttribute(attr) : null; };
-  var id = q('data-resp-wa') || q('data-resp-mail') || q('data-resp-xlsx') || q('data-resp-copy');
+  var id = q('data-resp-wa') || q('data-resp-mail') || q('data-resp-xlsx') || q('data-resp-copy') || q('data-resp-archivar') || q('data-resp-restaurar');
   if (!id) return;
   var r = null;
   responsivas.forEach(function (x) { if (x.id === id) r = x; });
@@ -5554,6 +5602,20 @@ document.getElementById('respList').addEventListener('click', function (e) {
   if (t.closest('[data-resp-mail]')) { respEnviarCorreo(r); return; }
   if (t.closest('[data-resp-xlsx]')) { respGuardarExcel(r); return; }
   if (t.closest('[data-resp-copy]')) { respCopiarEnlace(r); return; }
+  if (t.closest('[data-resp-archivar]')) {
+    showConfirm('¿Archivar esta responsiva? Podrás verla en Responsivas anteriores.').then(function (ok) {
+      if (!ok) return;
+      respArchivar(id, true);
+    });
+    return;
+  }
+  if (t.closest('[data-resp-restaurar]')) { respArchivar(id, false); return; }
+}
+document.getElementById('respList').addEventListener('click', respListClick);
+document.getElementById('respArchList').addEventListener('click', respListClick);
+document.getElementById('btnRespVerAnt').addEventListener('click', function () {
+  respMostrarArchivadas = !respMostrarArchivadas;
+  renderRespList();
 });
 document.getElementById('btnRespGuardar').addEventListener('click', function () { respGuardarYCerrar(); });
 document.getElementById('btnRespLimpiar').addEventListener('click', function () { respLimpiar(); });
@@ -6129,7 +6191,7 @@ document.getElementById('btnEuGuardar').addEventListener('click', function () {
   });
 });
 document.getElementById('btnReportar').addEventListener('click', function () {
-  window.location.href = 'mailto:gerardo.cruzhz@linux.com?subject=' + encodeURIComponent('Reporte de problema - Checklist de Soporte 263') + '&body=' + encodeURIComponent('Describe el problema:\n\n\nVersión de la app: 263');
+  window.location.href = 'mailto:gerardo.cruzhz@linux.com?subject=' + encodeURIComponent('Reporte de problema - Checklist de Soporte 264') + '&body=' + encodeURIComponent('Describe el problema:\n\n\nVersión de la app: 264');
 });
 
 boot();

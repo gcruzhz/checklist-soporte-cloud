@@ -532,6 +532,17 @@ function subscribeResponsivas(cb, uidOpcional) {
   );
 }
 
+// Archivar responsivas (2.5.14): archivar NO borra nada; solo marca
+// archivado + archivadoEn (restaurar pone archivado=false y
+// archivadoEn=null). Las reglas ya lo permiten: la rama update
+// propio/admin no restringe campos, así que firestore.rules NO se
+// toca. La suscripción devuelve los docs y el filtrado es en la app.
+async function archivarResponsiva(id, archivado) {
+  return updateDoc(doc(db, 'responsivas', id), archivado
+    ? { archivado: true, archivadoEn: Date.now() }
+    : { archivado: false, archivadoEn: null });
+}
+
 // Equipos detectados (2.3.3): el detector de escritorio reporta los equipos
 // que ve en la red (colección detectados) y los teléfonos los listan para
 // usarlos en un equipo nuevo o descartarlos. El id es info.machineId cuando
@@ -712,6 +723,7 @@ window.Cloud = {
   guardarFirma,
   crearResponsiva,
   subscribeResponsivas,
+  archivarResponsiva,
   reportDetected,
   subscribeDetectados,
   deleteDetectado,

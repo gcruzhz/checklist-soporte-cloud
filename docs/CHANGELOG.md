@@ -1,9 +1,57 @@
 # Changelog — Checklist de Soporte (nube)
 
-Resumen por versión, 2.0.0 → 2.5.13. Fuentes: el historial registrado
+Resumen por versión, 2.0.0 → 2.5.14. Fuentes: el historial registrado
 del proyecto (memoria 2026-11-12 a 2026-11-17) y las series de tests
 (`tests/test20*.js`). Las versiones 2.0.1–2.0.4 no tienen registro y
 no se documentan con supuestos.
+
+## 2.5.14 — 2026-11-19
+
+- **Vista «Responsiva»: texto de invitación, botón Archivar y
+  «Ver responsivas anteriores».** Texto exacto «Por favor llena tus
+  datos para crear tu responsiva» en tres sitios: (a) subtítulo en la
+  vista Responsiva, junto al botón «Enviar formulario en blanco»;
+  (b) mensaje de WhatsApp del enlace en blanco, antes del enlace
+  (sustituye el «Hola, llena tu responsiva…»); (c) encabezado de la
+  página pública `hosting/public/responsiva.html`, antes de los 6
+  campos. Cada tarjeta activa de «Responsivas enviadas» (pendiente y
+  llenada) trae ahora «📥 Archivar»: pide confirmación con
+  «¿Archivar esta responsiva? Podrás verla en Responsivas
+  anteriores.» y marca la responsiva como archivada (nueva
+  `archivarResponsiva(id, archivado)` en `www/cloud/firebase.js`,
+  expuesta en `window.Cloud`: `archivado: true` +
+  `archivadoEn: ms` con update/merge; restaurar pone
+  `archivado: false` y `archivadoEn: null`). Archivar NO borra nada:
+  la tarjeta sale de la lista principal y pasa a la sección
+  «Responsivas archivadas», que se muestra con el botón/toggle
+  «📂 Ver responsivas anteriores» debajo de la lista principal (el
+  toggle vive solo durante la sesión); cada tarjeta archivada muestra
+  los mismos datos, el estado y la fecha de archivado, con su botón
+  «↩️ Restaurar» (vuelve a la lista principal, sin confirmación). Sin
+  archivadas muestra «No hay responsivas archivadas». La suscripción
+  ya devuelve los docs y el filtrado es en la app. `firestore.rules`
+  NO se toca: la rama update propio/admin no restringe campos, así
+  que archivar/restaurar ya están permitidos. El formulario directo
+  del técnico y el flujo de enviar en blanco NO se tocan salvo el
+  texto nuevo. El bundle de Firebase cambia esta vez: md5 nuevo
+  `f9c4918d91bfbf4057433c43c54d708a` (506 932 B), mismo en APK y
+  escritorio.
+- Tests `test20264.js`: **896 true / 0 false** (876 de 2.5.13 + 20
+  nuevas de la serie 264: texto exacto en la vista, en el mensaje de
+  WhatsApp en blanco y en `responsiva.html` servida en local por HTTP;
+  archivar con confirmación (No no archiva, Sí archiva y avisa), la
+  tarjeta sale de la principal y entra en archivadas, el toggle
+  muestra/oculta la sección, restaurar la devuelve, sin archivadas el
+  mensaje vacío, sin nube archivar avisa y no llama, el formulario
+  directo y la suscripción siguen intactos). Detector tests sin
+  cambios: 473/0. El parche web y el de tests son reproducibles
+  (`tests/patch_20264_web.py`, `tests/patch_test_20264.py`).
+- APK 2.5.14 (versionCode 68): 15 772 873 B, md5
+  `89bb86e14cf31c2ca61201da4c3ef13d`, firma permanente verificada
+  (apksigner v2, 1 firmante: CN=Gerardo Cruz Hernandez), bundle nuevo
+  dentro (`f9c4918d…`, 506 932 B), `www/index.html` md5
+  `e64acbbba466759205431be5f47c63b9`.
+  Escritorio 2.5.14 en el CHANGELOG del repo desktop.
 
 ## 2.5.13 — 2026-11-19
 

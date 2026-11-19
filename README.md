@@ -5,9 +5,9 @@ recibir y entregar equipos de renta, y levantar órdenes de mantenimiento
 preventivo con firma del usuario. Los datos se sincronizan entre todos los
 teléfonos del equipo mediante Firebase (Firestore), con caché offline.
 
-- **Versión actual:** 2.5.13 (`versionCode` 67, `versionName` "2.5.13" en
-  `android/app/build.gradle`; iOS `MARKETING_VERSION` 2.5.13 /
-  `CURRENT_PROJECT_VERSION` 67).
+- **Versión actual:** 2.5.14 (`versionCode` 68, `versionName` "2.5.14" en
+  `android/app/build.gradle`; iOS `MARKETING_VERSION` 2.5.14 /
+  `CURRENT_PROJECT_VERSION` 68).
 - **Repositorio público:** https://github.com/gcruzhz/checklist-soporte-cloud
 - **Autor:** Gerardo Cruz Hernandez (gerardo.cruzhz@linux.com)
 - **App Android:** `mx.gerardo.checklistsoporte` (Capacitor).
@@ -19,15 +19,14 @@ teléfonos del equipo mediante Firebase (Firestore), con caché offline.
 > menciona aquí solo como referencia histórica, no se documenta en detalle.
 > Todo lo de este README describe la app en la nube (2.x).
 
-> **Últimos cambios (2.5.13):** la vista «Responsiva» ahora envía el
-> formulario EN BLANCO por WhatsApp: el botón «📤 Enviar formulario en
-> blanco» crea la responsiva en la nube y comparte el enlace
-> `responsiva.html?id=…` para que el colaborador la llene en una página
-> web; la responsiva llenada aparece sola en «Responsivas enviadas»,
-> con compartir por WhatsApp, correo y «Guardar en Excel». El
-> formulario directo del técnico sigue intacto. Reglas publicadas y
-> `responsiva.html` desplegada el 2026-11-19: el enlace ya funciona en
-> vivo. Historial completo
+> **Últimos cambios (2.5.14):** la vista «Responsiva» ahora invita con
+> «Por favor llena tus datos para crear tu responsiva» (en la vista, en
+> el mensaje de WhatsApp del enlace en blanco y en la página
+> `responsiva.html`); cada tarjeta de «Responsivas enviadas» trae
+> «📥 Archivar» (con confirmación; archivar no borra) y el botón
+> «📂 Ver responsivas anteriores» muestra las archivadas con su botón
+> «↩️ Restaurar». El formulario directo del técnico sigue intacto.
+> Historial completo
 > en [docs/CHANGELOG.md](docs/CHANGELOG.md).
 
 ## Qué hace
