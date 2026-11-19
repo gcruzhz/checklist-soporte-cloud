@@ -43,10 +43,9 @@ no se documentan con supuestos.
   por id, create propio con estado `pendiente`, update propio/admin O
   público restringido a `datos`+`estado`+`llenadoEn` con estado
   `llenada` y los 6 campos no vacíos, delete propio/admin).
-  **PENDIENTE para Gerardo: publicar ese bloque de reglas en la
-  consola de Firebase y desplegar `responsiva.html` en Hosting (con
-  login fresco); sin esos dos pasos el enlace todavía no funciona en
-  vivo.** El bundle de Firebase cambia esta vez: md5 nuevo
+  Reglas publicadas en la consola de Firebase y `responsiva.html`
+  desplegada en Hosting el 2026-11-19 (HTTP 200): el enlace ya
+  funciona en vivo. El bundle de Firebase cambia esta vez: md5 nuevo
   `de3d2dce1924710dc8458d10f47a1c45` (506 783 B), mismo en APK y
   escritorio.
 - Tests `test20263.js`: **876 true / 0 false** (861 de 2.5.12 + 15

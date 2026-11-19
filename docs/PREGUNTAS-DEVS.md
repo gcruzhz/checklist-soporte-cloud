@@ -55,11 +55,9 @@ Los PDF y el Excel se generan con código propio, sin librerías de diseño.
   Pendiente de probar en 2.5.13: el flujo completo de la Responsiva
   en blanco con un colaborador real (enviar en blanco por WhatsApp,
   que lo llene en la página, que aparezca llenada en la app, guardar
-  en Excel), en teléfono y en escritorio. **PENDIENTE (lo hace
-  Gerardo): publicar el bloque nuevo `responsivas` de
-  `firestore.rules` en la consola de Firebase y desplegar
-  `responsiva.html` en Hosting con login fresco; sin esos dos pasos
-  el enlace todavía no funciona en vivo.** Pendiente de probar en
+  en Excel), en teléfono y en escritorio. Las reglas `responsivas` se
+  publicaron en la consola de Firebase y `responsiva.html` se desplegó
+  en Hosting el 2026-11-19: el enlace ya funciona en vivo. Pendiente de probar en
   2.5.12: el flujo completo de la Responsiva directa con datos reales
   (llenar, guardar y cerrar, reabrir, enviar por WhatsApp). Pendiente de probar en 2.5.10: el compartir acortado por
   WhatsApp

@@ -25,9 +25,9 @@ teléfonos del equipo mediante Firebase (Firestore), con caché offline.
 > `responsiva.html?id=…` para que el colaborador la llene en una página
 > web; la responsiva llenada aparece sola en «Responsivas enviadas»,
 > con compartir por WhatsApp, correo y «Guardar en Excel». El
-> formulario directo del técnico sigue intacto. **Pendiente:**
-> publicar las reglas nuevas y desplegar `responsiva.html` (lo hace
-> Gerardo). Historial completo
+> formulario directo del técnico sigue intacto. Reglas publicadas y
+> `responsiva.html` desplegada el 2026-11-19: el enlace ya funciona en
+> vivo. Historial completo
 > en [docs/CHANGELOG.md](docs/CHANGELOG.md).
 
 ## Qué hace
