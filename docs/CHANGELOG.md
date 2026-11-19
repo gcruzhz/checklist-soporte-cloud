@@ -1,9 +1,44 @@
 # Changelog — Checklist de Soporte (nube)
 
-Resumen por versión, 2.0.0 → 2.5.11. Fuentes: el historial registrado
+Resumen por versión, 2.0.0 → 2.5.12. Fuentes: el historial registrado
 del proyecto (memoria 2026-11-12 a 2026-11-17) y las series de tests
 (`tests/test20*.js`). Las versiones 2.0.1–2.0.4 no tienen registro y
 no se documentan con supuestos.
+
+## 2.5.12 — 2026-11-19
+
+- **Vista «Responsiva»: el formulario ahora se puede guardar y cerrar.**
+  Botón nuevo «💾 Guardar y cerrar» (`#btnRespGuardar`) junto a Enviar
+  y Limpiar: guarda los 6 campos tal como están (aunque estén
+  incompletos, un borrador puede estar a medias) en localStorage
+  (`checklist-soporte-resp-borrador-v1`), muestra el toast «Responsiva
+  guardada» y vuelve a Inicio. Al abrir la vista Responsiva, si hay un
+  borrador guardado los 6 campos se restauran (también la primera vez
+  tras arrancar); sin borrador el formulario abre vacío, como antes. El
+  número de WhatsApp NO forma parte del borrador: persiste aparte, en
+  su propia clave (`checklist-soporte-resp-wa-v1`). Al enviar (con
+  número configurado o sin él, vía `shareText`), tras abrir WhatsApp el
+  borrador se borra y los 6 campos se vacían: la próxima abre vacía. Si
+  la validación falla o el número es inválido, no se borra nada.
+  «Limpiar» vacía los 6 campos y borra también el borrador. El
+  borrador vive solo en el teléfono (localStorage); no va a la nube ni
+  a Firestore.
+- `respGuardarBorrador`, `respCargarBorrador`, `respBorrarBorrador`,
+  `respGuardarYCerrar` y `respDespuesDeEnviar` en `www/index.html`;
+  `showVista('resp')` restaura el borrador; `respEnviar` y
+  `respLimpiar` actualizados; botón `#btnRespGuardar` en `#viewResp`.
+- Tests `test20262.js`: **861 true / 0 false** (847 de 2.5.11 + 14
+  nuevas de la serie 262: guardar el borrador completo e incompleto y
+  volver a Inicio, restaurarlo al reabrir, no tocar el número,
+  enviar con y sin número borra el borrador y vacía los campos, enviar
+  con validación fallida no borra el borrador, Limpiar borra el
+  borrador; la serie 261 se ajustó porque Enviar ya vacía los campos).
+  El parche web y el de tests son reproducibles
+  (`tests/patch_20262_web.py`, `tests/patch_test_20262.py`).
+- Solo código, tests y docs en este cambio: la APK 2.5.12
+  (versionCode 66) y el escritorio se construyen aparte; el bundle
+  de Firebase sigue con md5 `57fa245be36954586955b6005296f937`, sin
+  cambios.
 
 ## 2.5.11 — 2026-11-19
 

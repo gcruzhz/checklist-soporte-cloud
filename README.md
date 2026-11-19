@@ -5,9 +5,9 @@ recibir y entregar equipos de renta, y levantar órdenes de mantenimiento
 preventivo con firma del usuario. Los datos se sincronizan entre todos los
 teléfonos del equipo mediante Firebase (Firestore), con caché offline.
 
-- **Versión actual:** 2.5.6 (`versionCode` 60, `versionName` "2.5.6" en
-  `android/app/build.gradle`; iOS `MARKETING_VERSION` 2.5.6 /
-  `CURRENT_PROJECT_VERSION` 60).
+- **Versión actual:** 2.5.12 (`versionCode` 66, `versionName` "2.5.12" en
+  `android/app/build.gradle`; iOS `MARKETING_VERSION` 2.5.12 /
+  `CURRENT_PROJECT_VERSION` 66).
 - **Repositorio público:** https://github.com/gcruzhz/checklist-soporte-cloud
 - **Autor:** Gerardo Cruz Hernandez (gerardo.cruzhz@linux.com)
 - **App Android:** `mx.gerardo.checklistsoporte` (Capacitor).
@@ -19,11 +19,12 @@ teléfonos del equipo mediante Firebase (Firestore), con caché offline.
 > menciona aquí solo como referencia histórica, no se documenta en detalle.
 > Todo lo de este README describe la app en la nube (2.x).
 
-> **Últimos cambios (2.5.11):** vista nueva «Responsiva» en Inicio: un
-> formulario (Nombre Completo, Número de colaborador, Sucursal, Puesto,
-> Jefe Directo, Área) que se envía por WhatsApp al número configurado,
-> guardado solo en el teléfono; sin número abre WhatsApp para elegir el
-> contacto. El envío no guarda nada en la nube. Historial completo
+> **Últimos cambios (2.5.12):** la vista «Responsiva» ahora se puede
+> guardar y cerrar: el botón «💾 Guardar y cerrar» guarda el formulario
+> (aunque esté incompleto) como borrador solo en el teléfono y vuelve a
+> Inicio; al reabrir la vista aparece lleno para enviarlo por WhatsApp.
+> Al enviar se borra el borrador y el formulario queda vacío. El
+> borrador no va a la nube. Historial completo
 > en [docs/CHANGELOG.md](docs/CHANGELOG.md).
 
 ## Qué hace
