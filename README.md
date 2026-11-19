@@ -19,13 +19,12 @@ teléfonos del equipo mediante Firebase (Firestore), con caché offline.
 > menciona aquí solo como referencia histórica, no se documenta en detalle.
 > Todo lo de este README describe la app en la nube (2.x).
 
-> **Últimos cambios (2.5.14):** la vista «Responsiva» ahora invita con
-> «Por favor llena tus datos para crear tu responsiva» (en la vista, en
-> el mensaje de WhatsApp del enlace en blanco y en la página
-> `responsiva.html`); cada tarjeta de «Responsivas enviadas» trae
-> «📥 Archivar» (con confirmación; archivar no borra) y el botón
-> «📂 Ver responsivas anteriores» muestra las archivadas con su botón
-> «↩️ Restaurar». El formulario directo del técnico sigue intacto.
+> **Últimos cambios (2.5.15):** «Enviar formulario en blanco» ahora
+> manda el enlace al número de WhatsApp del campo de la vista
+> Responsiva (10 dígitos → 52…; con 52 se respeta); sin número o con
+> número inválido abre `wa.me/?text=` para elegir contacto. El envío
+> directo del técnico, archivar/ver anteriores y el bundle de Firebase
+> no cambian.
 > Historial completo
 > en [docs/CHANGELOG.md](docs/CHANGELOG.md).
 

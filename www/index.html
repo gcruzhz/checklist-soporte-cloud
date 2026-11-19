@@ -180,7 +180,7 @@
     <img class="login-logo" src="lab-icon.png" alt="Checklist de Soporte">
     <h1>Checklist de Soporte</h1>
     <p class="login-sub">Ingresa con tu usuario para ver y registrar equipos.</p>
-    <p class="login-sub" style="font-size:11px;color:#999">Versión 2.5.14</p>
+    <p class="login-sub" style="font-size:11px;color:#999">Versión 2.5.15</p>
     <div id="loginBox">
       <form id="loginForm">
         <div class="field"><label>Usuario o correo</label><input id="loginEmail" type="text" placeholder="usuario o tu@correo.com" autocomplete="username"></div>
@@ -419,7 +419,7 @@
   <div class="card">
     <b>Acerca de</b>
     <div class="line">App: Checklist de Soporte</div>
-    <div class="line">Versión: 2.5.14</div>
+    <div class="line">Versión: 2.5.15</div>
     <div class="line" id="focusDiag">Foco: — · Elemento activo: —</div>
     <div class="line">Contacto: <a href="mailto:gerardo.cruzhz@linux.com">gerardo.cruzhz@linux.com</a></div>
     <div class="sub">© Gerardo Cruz Hernandez</div>
@@ -5410,10 +5410,12 @@ function respLimpiar() {
 // (263) Responsivas en blanco por WhatsApp: mismo patrón que la firma
 // de Mantenimientos (firma.html). Se crea el documento en Firestore
 // (estado 'pendiente', sin datos) y se comparte el enlace público
-// responsiva.html?id=<id> para elegir el contacto en WhatsApp; el
-// colaborador lo llena en la página web y la lista se actualiza sola
-// por la suscripción. Nada de borrador local para esto: el documento
-// vive en la nube desde que se crea.
+// responsiva.html?id=<id>; el colaborador lo llena en la página web y
+// la lista se actualiza sola por la suscripción. Nada de borrador
+// local para esto: el documento vive en la nube desde que se crea.
+// (265) El enlace se manda AL NÚMERO del campo #fResp-wa (mismo
+// normalizador mantWaNumber que el envío directo: 10 dígitos →
+ // prefijo 52). Sin número o inválido, cae al chooser wa.me/?text=.
 var RESP_URL_BASE = 'https://checklist-soporte.web.app/responsiva.html';
 var responsivas = [];
 var respMostrarArchivadas = false;
@@ -5451,8 +5453,16 @@ function respEnviarEnBlanco() {
   return Promise.resolve(window.Cloud.crearResponsiva(technicianName())).then(function (id) {
     if (!id) { showToast('No se pudo crear la responsiva.'); return false; }
     var url = RESP_URL_BASE + '?id=' + encodeURIComponent(id);
-    window.open('https://wa.me/?text=' + encodeURIComponent('Por favor llena tus datos para crear tu responsiva: ' + url), '_blank');
-    showToast('Responsiva creada, elige el contacto en WhatsApp.');
+    var texto = 'Por favor llena tus datos para crear tu responsiva: ' + url;
+    var waEl = document.getElementById('fResp-wa');
+    var num = mantWaNumber(waEl ? waEl.value : '');
+    if (!num || num.length < 10) {
+      window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank');
+      showToast('No hay número de WhatsApp configurado, elige el contacto.');
+      return true;
+    }
+    window.open('https://wa.me/' + num + '?text=' + encodeURIComponent(texto), '_blank');
+    showToast('Responsiva creada, enviada al número de WhatsApp.');
     return true;
   }).catch(function () {
     showToast('No se pudo crear la responsiva. Revisa tu conexión.');
@@ -6191,7 +6201,7 @@ document.getElementById('btnEuGuardar').addEventListener('click', function () {
   });
 });
 document.getElementById('btnReportar').addEventListener('click', function () {
-  window.location.href = 'mailto:gerardo.cruzhz@linux.com?subject=' + encodeURIComponent('Reporte de problema - Checklist de Soporte 264') + '&body=' + encodeURIComponent('Describe el problema:\n\n\nVersión de la app: 264');
+  window.location.href = 'mailto:gerardo.cruzhz@linux.com?subject=' + encodeURIComponent('Reporte de problema - Checklist de Soporte 265') + '&body=' + encodeURIComponent('Describe el problema:\n\n\nVersión de la app: 265');
 });
 
 boot();

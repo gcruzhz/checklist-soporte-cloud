@@ -1,9 +1,46 @@
 # Changelog — Checklist de Soporte (nube)
 
-Resumen por versión, 2.0.0 → 2.5.14. Fuentes: el historial registrado
+Resumen por versión, 2.0.0 → 2.5.15. Fuentes: el historial registrado
 del proyecto (memoria 2026-11-12 a 2026-11-17) y las series de tests
 (`tests/test20*.js`). Las versiones 2.0.1–2.0.4 no tienen registro y
 no se documentan con supuestos.
+
+## 2.5.15 — 2026-11-19
+
+- **Vista «Responsiva»: «Enviar formulario en blanco» al número de
+  WhatsApp configurado.** El botón `#btnRespBlanco` ahora lee el
+  número del campo «Número de WhatsApp para enviar el formulario»
+  (`#fResp-wa`) en el momento de pulsar y, si es válido, abre
+  `wa.me/<número>?text=` con el mismo mensaje de invitación y el
+  enlace `responsiva.html?id=…` (normalizador `mantWaNumber`: 10
+  dígitos → prefijo 52; un número ya con 52 se respeta; espacios y
+  guiones se quitan). Si el campo está vacío o el número no es válido
+  (menos de 10 dígitos), mantiene el comportamiento anterior: abre
+  `wa.me/?text=` para elegir contacto y avisa con «No hay número de
+  WhatsApp configurado, elige el contacto». Con número avisa
+  «Responsiva creada, enviada al número de WhatsApp.». Cómo se guarda
+  el número y el envío directo del formulario del técnico NO cambian.
+  Nada más cambia: ni `responsiva.html`, ni `firebase.js`, ni
+  `firestore.rules`, ni el flujo de archivar/ver anteriores. El bundle
+  de Firebase NO cambia esta vez: md5 `f9c4918d91bfbf4057433c43c54d708a`
+  (506 932 B), mismo en APK y escritorio.
+- Tests `test20265.js`: **903 true / 0 false** (896 de 2.5.14 + 7
+  nuevas de la serie 265: versión 2.5.15 y bundle sin cambio, número
+  con 52, número inválido cae al chooser, número con espacios y
+  guiones se normaliza, el envío directo sigue igual). Los tests 263C
+  (ahora con número: wa.me/525512345678) y 264B (ahora con el campo
+  vacío: chooser + toast) se actualizaron al comportamiento nuevo.
+  Detector tests sin cambios: 473/0. Smoke-265 VEREDICTO OK (clics
+  reales en Electron: con número abre wa.me/525512345678 con la
+  invitación y el enlace; sin número abre el chooser con el toast).
+  El parche web y el de tests son reproducibles
+  (`tests/patch_20265_web.py`, `tests/patch_20265_test.py`).
+- APK 2.5.15 (versionCode 69): 15 772 993 B, md5
+  `ed43fd8278cb797257b36973720b76ad`, firma permanente verificada
+  (apksigner v2, 1 firmante: CN=Gerardo Cruz Hernandez), bundle sin
+  cambio dentro (`f9c4918d…`, 506 932 B), `www/index.html` md5
+  `db7493b921db8d49d2e60e0bf87319c7`.
+  Escritorio 2.5.15 en el CHANGELOG del repo desktop.
 
 ## 2.5.14 — 2026-11-19
 

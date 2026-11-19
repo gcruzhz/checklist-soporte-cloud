@@ -1,7 +1,7 @@
 # Preguntas frecuentes para los devs — Checklist de Soporte
 
 Respuestas listas para pasarle a un desarrollador que va a tomar la app.
-Versión actual: **2.5.14** (2026-11-19). Repos y documentación completa en
+Versión actual: **2.5.15** (2026-11-19). Repos y documentación completa en
 [GitHub](#código-y-documentación).
 
 ## ¿En qué lenguaje está?
@@ -52,7 +52,12 @@ Los PDF y el Excel se generan con código propio, sin librerías de diseño.
   entrega un .exe portable en ZIP); iOS necesita una Mac; los archivos de
   Windows van sin firmar por decisión de Gerardo.
 - **Cómo se prueba todo:** en teléfono y PC reales (ver `docs/TESTING.md`).
-  Pendiente de probar en 2.5.14: el flujo completo de la Responsiva
+  Pendiente de probar en 2.5.15: el flujo completo de la Responsiva
+  en blanco al número configurado con un colaborador real (enviar en
+  blanco por WhatsApp al número del campo, que lo llene en la página,
+  que aparezca llenada en la app, guardar en Excel) +
+  archivar/restaurar y ver responsivas anteriores, en teléfono y en
+  escritorio. Pendiente de probar en 2.5.14: el flujo completo de la Responsiva
   en blanco con un colaborador real (enviar en blanco por WhatsApp,
   que lo llene en la página, que aparezca llenada en la app, guardar
   en Excel) + archivar/restaurar y ver responsivas anteriores, en
@@ -80,8 +85,8 @@ Los PDF y el Excel se generan con código propio, sin librerías de diseño.
 - Nube: https://github.com/gcruzhz/checklist-soporte-cloud
 - Escritorio: https://github.com/gcruzhz/checklist-soporte-desktop
 - Paquete completo para devs (código + docs + binarios que no van a
-  GitHub): ZIP 2.5.14 en Drive —
-  https://drive.google.com/file/d/11ioM-hCeCgVshSu9CFLs5kdnGQHNfaiY/view?usp=drivesdk
+  GitHub): ZIP 2.5.15 en Drive —
+  https://drive.google.com/file/d/1267uXmlw7nWswTLs5fJ9yPBW5tVTEaTq/view?usp=drivesdk
 - En cada repo: `docs/CHANGELOG.md` (historial por versión),
   `docs/SETUP_FIREBASE.md` (cómo levantar el backend),
   `docs/DATA_MODEL.md` (colecciones de Firestore),
