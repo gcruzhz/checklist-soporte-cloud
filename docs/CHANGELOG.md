@@ -5,6 +5,77 @@ del proyecto (memoria 2026-11-12 a 2026-11-17) y las series de tests
 (`tests/test20*.js`). Las versiones 2.0.1–2.0.4 no tienen registro y
 no se documentan con supuestos.
 
+## 2.5.16 — 2026-11-25
+
+- **Dos formularios nuevos con PDF: «Acuse Sistemas» y «Carta
+  Responsiva» (FO-SI-10).** Dos botones en Inicio (grid, patrón
+  Responsiva): «📄 Acuse Sistemas» (dark) y «📑 Carta Responsiva»
+  (green); dos vistas nuevas `viewAcuse` y `viewCarta` (formulario +
+  lista de guardados con PDF / WhatsApp / Correo / Eliminar + volver),
+  sin tabs nuevas. Cada guardado se reabre tocándolo (carga sus datos
+  en el formulario para reimprimir o compartir) y se elimina con
+  confirmación (admin o dueño). Sin nube los guardados van a
+  localStorage; con nube van a Firestore (colecciones nuevas `acuses`
+  y `cartas`, documento `{creadoPor, creadoPorNombre, creadoEn,
+  datos}`; la carta además lleva `folio`) y la lista llega por
+  suscripción (cada técnico ve los suyos, el admin todos).
+- **Acuse:** campos Fecha (por defecto hoy), Para*, De*, Anexo
+  (opcional). Empieza vacío (los datos del ejemplo — Beatriz Garduño
+  Dominguez RH - Revolución, SISTEMAS, Documentacion, Septiembre 01,
+  2026 — no se prellenan). PDF de 1 página carta: fecha arriba en
+  formato «Septiembre 01, 2026» (mes en español, día a 2 dígitos, año;
+  formateador nuevo `fmtFechaLarga`), tabla PARA / DE / ANEXO con
+  etiquetas en negrita y bloque RECIBE con Nombre / Fecha / Firma en
+  blanco para llenar a mano. Para y De obligatorios (en rojo si
+  faltan). Sin folio.
+- **Carta:** campos Fecha de solicitud (por defecto hoy), Folio (solo
+  lectura, «Se asigna al guardar»), Nombre del colaborador*, Número de
+  colaborador, Sucursal, Puesto, Jefe Directo, Ip de Red (vacío por
+  defecto, no se auto-llena) y Observaciones; equipo como tabla con
+  filas que se agregan/quitan (Modelo, Marca, Número de serie,
+  Concepto). Obligatorios: nombre del colaborador y al menos 1 fila
+  con Modelo o Número de serie. El folio (5 dígitos) se asigna al
+  GUARDAR con transacción nueva `asignarFolioCarta()` en
+  `config/foliosCarta` (empieza en 1, espejo de `asignarFolio()`); en
+  modo local, contador en localStorage. PDF de 2 páginas carta como el
+  original: p1 encabezado fijo con texto (Lapi grande + «Laboratorio
+  Médico» + título centrado + tabla Código: FO-SI-10, Versión: 3,
+  Fecha de actualización: 25-sep-23, Página: 1 de 2 — no hay asset de
+  logo Lapi en el repo), «Seguridad de la Información» + Fecha de
+  solicitud + FOLIO, DATOS DEL SOLICITANTE, tabla «Exclusivo de
+  Sistemas» (una fila por equipo) y NOMBRE Y FIRMA DEL USUARIO; p2
+  (Página: 2 de 2) título RESPONSABILIDADES DEL USUARIO RESGUARDATARIO
+  + el texto legal VERBATIM del docx (8 párrafos, con sus rarezas de
+  puntuación) + firma final. Los PDFs reusan el modelo de ops de
+  `buildPdfMant` y el guardado/compartido de `sharePdfMant`
+  (`guardarPdfCapacitor` + share web + descarga; el correo descarga el
+  PDF y abre mailto con el texto).
+- **Reglas nuevas en `firestore.rules` (acuses, cartas y
+  `config/foliosCarta`, espejo del patrón de responsivas/folios; get NO
+  público, no hay página pública para estos formatos). ⚠️ Las reglas
+  NO se publicaron por CLI desde el sandbox
+  (firebaserules.googleapis.com inalcanzable): hay que pegarlas en la
+  consola de Firebase antes de que los acuses/cartas se puedan guardar
+  (sin eso darán permiso denegado).**
+- `firebase.js`: funciones nuevas `asignarFolioCarta`, `crearAcuse`,
+  `subscribeAcuses`, `upsertAcuse`, `deleteAcuse`, `getAcuse`,
+  `crearCarta`, `subscribeCartas`, `upsertCarta`, `deleteCarta`,
+  `getCarta` + exports en `window.Cloud`. Bundle reconstruido con
+  `pnpm build:cloud`: md5 `d8ad9d102d13ef69925d7bdab65b9e33` (508 719 B);
+  `npx cap sync` aplicado (mismo bundle en Android e iOS).
+- Tests `test20266.js`: **926 true / 0 false** (903 de 2.5.15 + 23
+  nuevas de la serie 266 en 12 casos: acuse vacío por defecto, fecha
+  «Septiembre 01, 2026», PDF del acuse con PARA/DE/ANEXO/RECIBE,
+  validación de obligatorios, carta con folio de 5 dígitos vía
+  `crearCarta` (transacción mockeada), filas de equipo agregar/quitar,
+  PDF de carta FO-SI-10 con encabezado + campos + tabla de equipos +
+  fragmento VERBATIM de responsabilidades + 2 páginas, visibilidad
+  propia vs admin, reabrir/eliminar, compartir PDF por WhatsApp/correo
+  y folio local 00001/00002). El parche web y el de tests son
+  reproducibles (`tests/patch_20266_web.py`, `tests/patch_20266_test.py`).
+- APK 2.5.16 (versionCode 70) pendiente de compilar; tampoco se subió
+  nada a Drive ni a GitHub.
+
 ## 2.5.15 — 2026-11-19
 
 - **Vista «Responsiva»: «Enviar formulario en blanco» al número de

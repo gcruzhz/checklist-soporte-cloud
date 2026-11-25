@@ -543,6 +543,115 @@ async function archivarResponsiva(id, archivado) {
     : { archivado: false, archivadoEn: null });
 }
 
+// Acuses de Sistemas (2.5.16): acuse de recibido de documentos, sin
+// folio y sin página pública. El documento lleva creadoPor,
+// creadoPorNombre, creadoEn y datos {fecha, para, de, anexo}.
+// uidOpcional filtra por creadoPor (lo usan los usuarios normales para
+// que las reglas permitan la lectura); sin él el admin suscribe todo.
+async function crearAcuse(datos, creadoPorNombre) {
+  const u = auth.currentUser;
+  if (!u) throw new Error('no-auth');
+  const ref = doc(collection(db, 'acuses'));
+  await setDoc(ref, {
+    creadoPor: u.uid,
+    creadoPorNombre: creadoPorNombre || u.email || '',
+    creadoEn: Date.now(),
+    datos: datos || {}
+  });
+  return ref.id;
+}
+
+function subscribeAcuses(cb, uidOpcional) {
+  const q = uidOpcional
+    ? query(collection(db, 'acuses'), where('creadoPor', '==', uidOpcional))
+    : collection(db, 'acuses');
+  return onSnapshot(
+    q,
+    (snap) => cb(snap.docs.map((d) => Object.assign({ id: d.id }, d.data()))),
+    (err) => console.warn('[Cloud] Error en snapshot de acuses:', err)
+  );
+}
+
+async function upsertAcuse(rec) {
+  return setDoc(
+    doc(db, 'acuses', rec.id),
+    Object.assign({}, rec, { updatedAt: Date.now() }),
+    { merge: true }
+  );
+}
+
+async function deleteAcuse(id) {
+  return deleteDoc(doc(db, 'acuses', id));
+}
+
+async function getAcuse(id) {
+  const snap = await getDoc(doc(db, 'acuses', id));
+  return snap.exists() ? Object.assign({ id: snap.id }, snap.data()) : null;
+}
+
+// Folio de la carta responsiva (2.5.16): config/foliosCarta.siguiente
+// empieza en 1; la transacción lee, asigna el folio con 5 dígitos y
+// sube el contador, así dos teléfonos no repiten folio. Espejo de
+// asignarFolio() (config/folios de Mantenimientos).
+async function asignarFolioCarta() {
+  const ref = doc(db, 'config', 'foliosCarta');
+  return runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    const n = (snap.exists() && typeof snap.data().siguiente === 'number') ? snap.data().siguiente : 1;
+    tx.set(ref, { siguiente: n + 1 });
+    return String(n).padStart(5, '0');
+  });
+}
+
+// Cartas Responsivas FO-SI-10 (2.5.16): resguardo y uso de equipo de
+// cómputo. El folio se asigna al guardar (crearCarta lo pide con
+// asignarFolioCarta); el documento lleva creadoPor, creadoPorNombre,
+// creadoEn, folio y datos {fecha, nombre, colaborador, sucursal,
+// puesto, jefe, ip, observaciones, equipos: [{modelo, marca, serie,
+// concepto}]}. Sin página pública: solo el técnico y el admin.
+async function crearCarta(datos, creadoPorNombre) {
+  const u = auth.currentUser;
+  if (!u) throw new Error('no-auth');
+  const folio = await asignarFolioCarta();
+  const ref = doc(collection(db, 'cartas'));
+  await setDoc(ref, {
+    creadoPor: u.uid,
+    creadoPorNombre: creadoPorNombre || u.email || '',
+    creadoEn: Date.now(),
+    folio: folio,
+    datos: datos || {}
+  });
+  return { id: ref.id, folio: folio };
+}
+
+function subscribeCartas(cb, uidOpcional) {
+  const q = uidOpcional
+    ? query(collection(db, 'cartas'), where('creadoPor', '==', uidOpcional))
+    : collection(db, 'cartas');
+  return onSnapshot(
+    q,
+    (snap) => cb(snap.docs.map((d) => Object.assign({ id: d.id }, d.data()))),
+    (err) => console.warn('[Cloud] Error en snapshot de cartas:', err)
+  );
+}
+
+async function upsertCarta(rec) {
+  return setDoc(
+    doc(db, 'cartas', rec.id),
+    Object.assign({}, rec, { updatedAt: Date.now() }),
+    { merge: true }
+  );
+}
+
+async function deleteCarta(id) {
+  return deleteDoc(doc(db, 'cartas', id));
+}
+
+async function getCarta(id) {
+  const snap = await getDoc(doc(db, 'cartas', id));
+  return snap.exists() ? Object.assign({ id: snap.id }, snap.data()) : null;
+}
+
 // Equipos detectados (2.3.3): el detector de escritorio reporta los equipos
 // que ve en la red (colección detectados) y los teléfonos los listan para
 // usarlos en un equipo nuevo o descartarlos. El id es info.machineId cuando
@@ -724,6 +833,17 @@ window.Cloud = {
   crearResponsiva,
   subscribeResponsivas,
   archivarResponsiva,
+  crearAcuse,
+  subscribeAcuses,
+  upsertAcuse,
+  deleteAcuse,
+  getAcuse,
+  asignarFolioCarta,
+  crearCarta,
+  subscribeCartas,
+  upsertCarta,
+  deleteCarta,
+  getCarta,
   reportDetected,
   subscribeDetectados,
   deleteDetectado,
