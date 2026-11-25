@@ -180,7 +180,7 @@
     <img class="login-logo" src="lab-icon.png" alt="Checklist de Soporte">
     <h1>Checklist de Soporte</h1>
     <p class="login-sub">Ingresa con tu usuario para ver y registrar equipos.</p>
-    <p class="login-sub" style="font-size:11px;color:#999">Versión 2.5.16</p>
+    <p class="login-sub" style="font-size:11px;color:#999">Versión 2.5.17</p>
     <div id="loginBox">
       <form id="loginForm">
         <div class="field"><label>Usuario o correo</label><input id="loginEmail" type="text" placeholder="usuario o tu@correo.com" autocomplete="username"></div>
@@ -421,7 +421,7 @@
   <div class="card">
     <b>Acerca de</b>
     <div class="line">App: Checklist de Soporte</div>
-    <div class="line">Versión: 2.5.16</div>
+    <div class="line">Versión: 2.5.17</div>
     <div class="line" id="focusDiag">Foco: — · Elemento activo: —</div>
     <div class="line">Contacto: <a href="mailto:gerardo.cruzhz@linux.com">gerardo.cruzhz@linux.com</a></div>
     <div class="sub">© Gerardo Cruz Hernandez</div>
@@ -640,6 +640,7 @@
       <div class="field"><label>Número de colaborador</label><input id="fCa-colaborador" placeholder="Número de colaborador"></div>
       <div class="field"><label>Sucursal</label><input id="fCa-sucursal" placeholder="Sucursal"></div>
       <div class="field"><label>Puesto</label><input id="fCa-puesto" placeholder="Puesto"></div>
+      <div class="field"><label>Área</label><input id="fCa-area" placeholder="Área"></div>
       <div class="field"><label>Jefe Directo</label><input id="fCa-jefe" placeholder="Jefe directo"></div>
       <div class="field"><label>Ip de Red</label><input id="fCa-ip" placeholder="Ip de red (opcional)"></div>
       <div class="field"><label>Observaciones</label><textarea id="fCa-observaciones" placeholder="Observaciones (opcional)"></textarea></div>
@@ -1804,22 +1805,22 @@ function hoyISO() {
   function p(n) { return (n < 10 ? '0' : '') + n; }
   return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
 }
-// (266) Fecha larga del Acuse y la Carta, como en el formato original:
-// "Septiembre 01, 2026" (mes en español, día a 2 dígitos, año). Acepta
-// 'AAAA-MM-DD' (el valor del input date) o cualquier valor de fechaDe.
-// Se parsea por partes para no depender de la zona horaria.
+// (267) Fecha larga del Acuse y la Carta, como en el formato real:
+// "30 de Octubre de 2026" (día sin cero + "de" + mes CON MAYÚSCULA +
+// "de" + año). Acepta 'AAAA-MM-DD' (el valor del input date) o
+// cualquier valor de fechaDe. Se parsea por partes para no depender
+// de la zona horaria.
 var MESES_ES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 function fmtFechaLarga(v) {
   var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v || ''));
   if (m) {
     var mi = Number(m[2]);
     if (mi < 1 || mi > 12) return '-';
-    return MESES_ES[mi - 1] + ' ' + m[3] + ', ' + m[1];
+    return Number(m[3]) + ' de ' + MESES_ES[mi - 1] + ' de ' + m[1];
   }
   var d = fechaDe(v);
   if (!d) return '-';
-  function p2(n) { return (n < 10 ? '0' : '') + n; }
-  return MESES_ES[d.getMonth()] + ' ' + p2(d.getDate()) + ', ' + d.getFullYear();
+  return d.getDate() + ' de ' + MESES_ES[d.getMonth()] + ' de ' + d.getFullYear();
 }
 function timeAgo(ms) {
   if (!ms) return 'sin registro';
@@ -1848,6 +1849,29 @@ function wrapText(text, maxChars) {
   });
   if (cur) lines.push(cur);
   return lines.length ? lines : [''];
+}
+// (267) Logo Lapi para los PDFs del Acuse y la Carta: recortado del
+// encabezado original FO-SI-10 (word/media/image1.jpeg del docx): "Lapi"
+// naranja + "Salud Integral" + "Laboratorio Médico" teal. El archivo
+// canónico es www/assets/logo-lapi.jpg (276x161, md5
+// b9f5fb0c610a42aa47332a07d622f4c3); aquí va en base64 para que el PDF lo
+// lleve incrustado sin depender de fetch (la app es un solo
+// www/index.html y los tests de node evalúan este script). El logo del
+// docx del Acuse (word/media/image1.png) es otra variante ("Certificado
+// ISO 9001:2000") y NO se usa: el formato real que muestra la captura
+// es el de "Laboratorio Médico".
+var LOGO_LAPI_JPEG_B64 = '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';
+var LOGO_LAPI_W = 276, LOGO_LAPI_H = 161;
+var _logoLapiImg = null;
+function logoLapiImg() {
+  if (_logoLapiImg) return _logoLapiImg;
+  try {
+    var bin = atob(LOGO_LAPI_JPEG_B64);
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    _logoLapiImg = { bytes: bytes, w: LOGO_LAPI_W, h: LOGO_LAPI_H };
+  } catch (e) { _logoLapiImg = null; }
+  return _logoLapiImg;
 }
 // Ensamblador de PDF (251): buildPdf y buildPdfMant comparten la
 // paginación y el xref. Las filas pueden llevar una imagen JPEG
@@ -1961,10 +1985,14 @@ function pdfSafe(s) {
 // páginas, fuentes, imágenes, xref), pero cada página es una lista de
 // operaciones con coordenadas absolutas. NO lo usa buildPdf (preparación).
 // Operaciones: {k:'t', x, y, f, s, str, a, color} texto (y = línea base
-// desde abajo; a = 'C' centrado en x, 'R' borde derecho en x, color 'red');
-// {k:'r', x, y, w, h, fill} rectángulo (y = borde inferior; fill = gris
-// 0..1 o null, siempre con borde); {k:'ln', x1, y1, x2, y2} línea;
+// desde abajo; a = 'C' centrado en x, 'R' borde derecho en x;
+// color: 'red', gris 0..1 o [r, g, b] 0..1); {k:'r', x, y, w, h, fill}
+// rectángulo (y = borde inferior; fill = gris 0..1, [r, g, b] o null,
+// siempre con borde); {k:'ln', x1, y1, x2, y2, w, color} línea
+// (w = grosor en pt, por defecto 0.6; color como en 't');
 // {k:'img', name, x, y, w, h} imagen (y = borde inferior).
+// (267) Fuentes F3 Helvetica-Oblique y F4 Helvetica-BoldOblique para
+// la negrita cursiva del Acuse (PARA/DE/ANEXO y etiquetas RECIBE).
 // (255) Tamaño de página opcional: carta (612x792) para la orden de
 // servicio; por defecto A4 (595x842).
 function assemblePdfOps(pages, images, pageSize) {
@@ -1973,7 +2001,7 @@ function assemblePdfOps(pages, images, pageSize) {
   var objs = [];
   objs[1] = '<< /Type /Catalog /Pages 2 0 R >>';
   var kidRefs = [];
-  var nextId = 5;
+  var nextId = 7;
   var imgIds = {};
   Object.keys(images).forEach(function (name) {
     var im = images[name];
@@ -1989,19 +2017,29 @@ function assemblePdfOps(pages, images, pageSize) {
         if (op.a === 'R') tx = op.x - pdfTextWidth(op.str, op.f, op.s);
         else if (op.a === 'C') tx = op.x - pdfTextWidth(op.str, op.f, op.s) / 2;
         if (op.color === 'red') cs += '1 0 0 rg ';
+        else if (typeof op.color === 'number') cs += op.color + ' g ';
+        else if (Array.isArray(op.color)) cs += op.color.join(' ') + ' rg ';
         cs += 'BT /' + op.f + ' ' + op.s + ' Tf ' + tx.toFixed(1) + ' ' + op.y.toFixed(1) + ' Td (' + pdfEsc(op.str) + ') Tj ET\n';
-        if (op.color === 'red') cs += '0 g\n';
+        if (op.color != null) cs += '0 g\n';
       } else if (op.k === 'r') {
-        if (op.fill != null) cs += op.fill + ' g ' + op.x.toFixed(1) + ' ' + op.y.toFixed(1) + ' ' + op.w.toFixed(1) + ' ' + op.h.toFixed(1) + ' re f\n0 g\n';
+        if (op.fill != null) {
+          if (Array.isArray(op.fill)) cs += op.fill.join(' ') + ' rg ';
+          else cs += op.fill + ' g ';
+          cs += op.x.toFixed(1) + ' ' + op.y.toFixed(1) + ' ' + op.w.toFixed(1) + ' ' + op.h.toFixed(1) + ' re f\n0 g\n';
+        }
         cs += '0.6 w ' + op.x.toFixed(1) + ' ' + op.y.toFixed(1) + ' ' + op.w.toFixed(1) + ' ' + op.h.toFixed(1) + ' re S\n';
       } else if (op.k === 'ln') {
-        cs += '0.6 w ' + op.x1.toFixed(1) + ' ' + op.y1.toFixed(1) + ' m ' + op.x2.toFixed(1) + ' ' + op.y2.toFixed(1) + ' l S\n';
+        cs += (op.w || 0.6) + ' w ';
+        if (Array.isArray(op.color)) cs += op.color.join(' ') + ' RG ';
+        else if (typeof op.color === 'number') cs += op.color + ' G ';
+        cs += op.x1.toFixed(1) + ' ' + op.y1.toFixed(1) + ' m ' + op.x2.toFixed(1) + ' ' + op.y2.toFixed(1) + ' l S\n';
+        if (op.color != null) cs += '0 G\n';
       } else if (op.k === 'img' && imgIds[op.name]) {
         cs += 'q ' + op.w + ' 0 0 ' + op.h + ' ' + op.x.toFixed(1) + ' ' + op.y.toFixed(1) + ' cm /Im' + op.name + ' Do Q\n';
       }
     });
     objs[contentId] = '<< /Length ' + pdfBytes(cs).length + ' >>\nstream\n' + cs + '\nendstream';
-    var res = '<< /Font << /F1 3 0 R /F2 4 0 R >>';
+    var res = '<< /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R /F4 6 0 R >>';
     var xobjs = Object.keys(imgIds).map(function (n) { return '/Im' + n + ' ' + imgIds[n] + ' 0 R'; }).join(' ');
     if (xobjs) res += ' /XObject << ' + xobjs + ' >>';
     res += ' >>';
@@ -2015,6 +2053,8 @@ function assemblePdfOps(pages, images, pageSize) {
   objs[2] = '<< /Type /Pages /Kids [' + kidRefs.join(' ') + '] /Count ' + pages.length + ' >>';
   objs[3] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>';
   objs[4] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>';
+  objs[5] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Oblique /Encoding /WinAnsiEncoding >>';
+  objs[6] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-BoldOblique /Encoding /WinAnsiEncoding >>';
   var pdf = '%PDF-1.4\n';
   var offsets = [0];
   for (var i = 1; i < nextId; i++) {
@@ -5287,56 +5327,82 @@ async function shareMantCopy(m) {
     showToast('PDF descargado: ' + out.name + '. Compártelo por WhatsApp desde tus archivos.');
   }
 }
-// (266) PDF del Acuse Sistemas (1 página carta): fecha larga arriba,
-// tabla PARA / DE / ANEXO con etiquetas en negrita y bloque RECIBE con
-// Nombre / Fecha / Firma en blanco para llenar a mano.
+// (267) PDF del Acuse Sistemas (1 página carta) como el formato real:
+// encabezado con el logo Lapi (imagen) + "ACUSE DE RECIBO" en caja gris
+// + línea naranja; fecha a la derecha en español largo ("30 de Octubre
+// de 2026"); PARA/DE en negrita cursiva 24 pt y ANEXO con valor en
+// negrita cursiva 14 pt subrayado, con aire entre filas; tabla RECIBE
+// de ancho completo con encabezado gris C0C0C0 y 3 filas altas con la
+// etiqueta en gris y la celda blanca vacía para escribir a mano.
+// Medidas del original (docx + captura): márgenes izq 57 pt / der 38 pt,
+// logo 111x65 pt, caja del título 235x30 pt, línea naranja 2.5 pt.
 function buildPdfAcuse(a) {
   var d = (a && a.datos) || {};
-  var W = 612, H = 792, M = 36, USABLE = H - M * 2;
+  var W = 612, H = 792, USABLE = H - 14;
+  var ML = 57, X1 = 574, CW = X1 - ML;
   var pages = [[]];
   var yt = 0;
   function cur() { return pages[pages.length - 1]; }
   function need(h) { if (yt + h > USABLE) { pages.push([]); yt = 0; } }
-  function py(ytop) { return H - M - ytop; }
+  function py(ytop) { return H - ytop; }
   function T(str, x, ytop, f, s, color, align) {
     cur().push({ k: 't', x: x, y: py(ytop) - (s || 9) * 0.8, f: f || 'F1', s: s || 9, str: pdfSafe(str), color: color || null, a: align || 'L' });
   }
   function R(x, ytop, w, h, fill) {
     cur().push({ k: 'r', x: x, y: py(ytop) - h, w: w, h: h, fill: (fill == null ? null : fill) });
   }
-  function LN(x1, y1, x2, y2) { cur().push({ k: 'ln', x1: x1, y1: py(y1), x2: x2, y2: py(y2) }); }
+  function LN(x1, y1, x2, y2, w, color) { cur().push({ k: 'ln', x1: x1, y1: py(y1), x2: x2, y2: py(y2), w: w || null, color: color || null }); }
+  function IMG(name, x, ytop, w, h) { cur().push({ k: 'img', name: name, x: x, y: py(ytop) - h, w: w, h: h }); }
   function wrapLines(str, w, s) {
     return wrapText(pdfSafe(str), Math.max(10, Math.floor(w / ((s || 9) * 0.5))));
   }
   function val(v) { return (v == null || v === '') ? '-' : String(v); }
-  // Fecha arriba, a la derecha.
-  need(20);
-  T(fmtFechaLarga(d.fecha), 576, yt, 'F1', 11, null, 'R');
-  yt += 26;
-  // Tabla PARA / DE / ANEXO.
-  var filas = [['PARA:', val(d.para)], ['DE:', val(d.de)], ['ANEXO:', val(d.anexo)]];
-  filas.forEach(function (f) {
-    var lines = wrapLines(f[1], 460, 10);
-    var h = Math.max(24, lines.length * 13 + 10);
+  var ORANGE = [1, 0.4, 0];
+  var TITULO_GRIS = [0.35, 0.35, 0.35];
+  // Encabezado: logo Lapi a la izquierda y título en caja gris.
+  var logo = logoLapiImg();
+  if (logo) IMG('Lapi', 90, 8, 111, 65);
+  R(249, 43, 235, 30, 0.93);
+  T('ACUSE DE RECIBO', 367, 47, 'F2', 22, TITULO_GRIS, 'C');
+  // Línea naranja bajo el encabezado, ancho del contenido.
+  LN(ML, 102, 552, 102, 2.5, ORANGE);
+  // Fecha arriba, a la derecha, en español largo.
+  T(fmtFechaLarga(d.fecha), X1, 118, 'F1', 11, null, 'R');
+  // PARA / DE / ANEXO: etiquetas a la izquierda, valores desde x=170.
+  yt = 171;
+  function filaAcuse(label, value, labelFont, labelSize, valueFont, valueSize, underline) {
+    var lines = wrapLines(val(value), 404, valueSize);
+    var lh = valueSize === 24 ? 29 : 17;
+    var h = lines.length * lh;
     need(h);
     var y0 = yt;
-    R(36, y0, 540, h, null);
-    T(f[0], 44, y0 + 6, 'F2', 10);
-    lines.forEach(function (ln, i) { T(ln, 104, y0 + 6 + i * 13, 'F1', 10); });
-    yt += h + 4;
-  });
-  yt += 30;
-  // Bloque RECIBE con líneas en blanco para llenar a mano.
-  need(120);
+    T(label, ML, y0, labelFont, labelSize);
+    lines.forEach(function (ln, i) {
+      T(ln, 170, y0 + i * lh, valueFont, valueSize);
+      if (underline) LN(170, y0 + i * lh + valueSize * 0.8 + 2, 170 + pdfTextWidth(ln, valueFont, valueSize), y0 + i * lh + valueSize * 0.8 + 2);
+    });
+    return h;
+  }
+  var hP = filaAcuse('PARA:', d.para, 'F4', 24, 'F4', 24, false);
+  yt += hP + 38;
+  var hD = filaAcuse('DE:', d.de, 'F4', 24, 'F4', 24, false);
+  yt += hD + 26;
+  filaAcuse('ANEXO:', d.anexo, 'F1', 14, 'F4', 14, true);
+  yt += 17 + 37;
+  // Tabla RECIBE: encabezado gris C0C0C0 (0.75) y 3 filas altas.
+  need(44 + 3 * 54);
   var y0 = yt;
-  T('RECIBE:', 36, y0, 'F2', 11);
-  ['Nombre:', 'Fecha:', 'Firma:'].forEach(function (lab, i) {
-    var yy = y0 + 24 + i * 28;
-    T(lab, 36, yy, 'F2', 10);
-    LN(110, yy + 10, 540, yy + 10);
+  R(ML, y0, CW, 44, 0.75);
+  T('RECIBE:', 315, y0 + 12, 'F2', 20, null, 'C');
+  yt = y0 + 44;
+  ['Nombre:', 'Fecha:', 'Firma:'].forEach(function (lab) {
+    var yy = yt;
+    R(ML, yy, 76, 54, 0.75);
+    R(ML + 76, yy, CW - 76, 54, null);
+    T(lab, ML + 6, yy + 21, 'F4', 11);
+    yt += 54;
   });
-  yt += 24 + 3 * 28;
-  return assemblePdfOps(pages, {}, { w: 612, h: 792 });
+  return assemblePdfOps(pages, { Lapi: logo }, { w: 612, h: 792 });
 }
 // (266) Texto legal de la Carta Responsiva FO-SI-10, VERBATIM del
 // documento original ("RESPONSABILIDADES DEL USUARIO RESGUARDATARIO"),
@@ -5352,13 +5418,13 @@ var CARTA_RESPONSABILIDADES = [
   'Acepto que en caso de detectarse mal uso y/o daños al equipo que tengo bajo mi resguardo seré considerado como responsable. Por lo anterior, es imprescindible que, salvo autorizaciones específicas, se evite la utilización de equipamiento por parte de personal no autorizado, ajeno al área solicitante y/o a LAPI S.A. de C.V.',
   'Finalmente, acepto y reconozco que, una vez concluida mi relación laboral con LAPI, tengo la obligación de entregar el equipo bajo mi resguardo, así como la información contenida en el mismo y sus accesorios, en caso contrario, me hago sabedor de la responsabilidad civil por los daños y perjuicios que cause por mi omisión, así como de las acciones penales que puedan derivar por los delitos que ello conlleve.'
 ];
-// (266) PDF de la Carta Responsiva (2 páginas carta): p1 con el
-// encabezado fijo del formato (Lapi / Laboratorio Médico, título y
-// tabla Código FO-SI-10, Versión 3, Fecha de actualización 25-sep-23,
-// Página 1 de 2), Datos del solicitante, tabla Exclusivo de Sistemas y
-// Nombre y firma del usuario; p2 con las responsabilidades verbatim y
-// la firma final. No hay asset de logo Lapi en el repo: el encabezado
-// se reproduce con texto.
+// (267) PDF de la Carta Responsiva (2 páginas carta): p1 con el
+// encabezado fijo del formato (logo Lapi como imagen — el mismo asset
+// que el Acuse —, título y tabla Código FO-SI-10, Versión 3, Fecha de
+// actualización 25-sep-23, Página 1 de 2, con bordes y negritas),
+// Datos del solicitante (con Área), tabla Exclusivo de Sistemas con
+// encabezado VERDE #9BBB59 y Nombre y firma del usuario; p2 con las
+// responsabilidades verbatim y la firma final.
 function buildPdfCarta(c) {
   var d = (c && c.datos) || {};
   var equipos = Array.isArray(d.equipos) ? d.equipos : [];
@@ -5375,7 +5441,8 @@ function buildPdfCarta(c) {
   function R(x, ytop, w, h, fill) {
     cur().push({ k: 'r', x: x, y: py(ytop) - h, w: w, h: h, fill: (fill == null ? null : fill) });
   }
-  function LN(x1, y1, x2, y2) { cur().push({ k: 'ln', x1: x1, y1: py(y1), x2: x2, y2: py(y2) }); }
+  function LN(x1, y1, x2, y2, w, color) { cur().push({ k: 'ln', x1: x1, y1: py(y1), x2: x2, y2: py(y2), w: w || null, color: color || null }); }
+  function IMG(name, x, ytop, w, h) { cur().push({ k: 'img', name: name, x: x, y: py(ytop) - h, w: w, h: h }); }
   function wrapLines(str, w, s) {
     return wrapText(pdfSafe(str), Math.max(10, Math.floor(w / ((s || 9) * 0.5))));
   }
@@ -5389,15 +5456,28 @@ function buildPdfCarta(c) {
   // --- Página 1: encabezado fijo del formato.
   need(66);
   var y0 = yt;
-  T('Lapi', 36, y0, 'F2', 20);
-  T('Laboratorio Médico', 36, y0 + 23, 'F1', 9);
+  var logoC = logoLapiImg();
+  if (logoC) IMG('Lapi', 36, y0, 94, 55);
   var tit = wrapText('CARTA RESPONSIVA PARA RESGUARDO Y USO DE EQUIPO DE CÓMPUTO', 30);
   tit.forEach(function (ln, i) { T(ln, 306, y0 + 2 + i * 12, 'F2', 10, null, 'C'); });
-  R(420, y0, 156, 58, null);
-  T('Código: FO-SI-10', 426, y0 + 5, 'F1', 8);
-  T('Versión: 3', 426, y0 + 17, 'F1', 8);
-  T('Fecha de actualización: 25-sep-23', 426, y0 + 29, 'F1', 8);
-  T('Página: 1 de 2', 426, y0 + 41, 'F1', 8);
+  // Tabla Código (2 columnas, como el original): etiquetas en negrita a
+  // la izquierda, valores en negrita centrados. La fila de "Fecha de
+  // actualización:" es más alta porque la etiqueta va en 2 líneas.
+  var codX0 = 420, codX1 = 503, codX2 = 576;
+  var codTops = [y0, y0 + 13.5, y0 + 27, y0 + 50.5];
+  var codBot = y0 + 64;
+  R(codX0, y0, codX2 - codX0, 64, null);
+  LN(codX1, y0, codX1, codBot);
+  codTops.slice(1).forEach(function (yy) { LN(codX0, yy, codX2, yy); });
+  T('Código:', codX0 + 5, codTops[0] + 3, 'F2', 8);
+  T('FO-SI-10', (codX1 + codX2) / 2, codTops[0] + 3, 'F2', 8, null, 'C');
+  T('Versión:', codX0 + 5, codTops[1] + 3, 'F2', 8);
+  T('3', (codX1 + codX2) / 2, codTops[1] + 3, 'F2', 8, null, 'C');
+  T('Fecha de', codX0 + 5, codTops[2] + 2, 'F2', 8);
+  T('actualización:', codX0 + 5, codTops[2] + 11.5, 'F2', 8);
+  T('25-sep-23', (codX1 + codX2) / 2, codTops[2] + 7, 'F2', 8, null, 'C');
+  T('Página:', codX0 + 5, codTops[3] + 3, 'F2', 8);
+  T('1 de 2', (codX1 + codX2) / 2, codTops[3] + 3, 'F2', 8, null, 'C');
   yt += 66 + 6;
   // Seguridad de la Información + fecha de solicitud + folio.
   need(32);
@@ -5414,7 +5494,7 @@ function buildPdfCarta(c) {
     [['Nombre del colaborador:', d.nombre, 540]],
     [['Número de colaborador:', d.colaborador, 264], ['Ip de Red:', d.ip, 264]],
     [['Sucursal:', d.sucursal, 264], ['Puesto:', d.puesto, 264]],
-    [['Jefe Directo:', d.jefe, 540]]
+    [['Área:', d.area, 264], ['Jefe Directo:', d.jefe, 264]]
   ];
   filas.forEach(function (fila) {
     var hMax = 11;
@@ -5440,22 +5520,25 @@ function buildPdfCarta(c) {
   need(16);
   T('Exclusivo de Sistemas', 36, yt, 'F2', 10);
   yt += 16;
+  // Anchos del original (docx): Modelo 21.6%, Marca 21.6%,
+  // Número de serie 28.4%, Concepto 28.4% de 540 pt.
   var cols = [
-    ['Modelo', 36, 150], ['Marca', 186, 120], ['Número de serie', 306, 150], ['Concepto', 456, 120]
+    ['Modelo', 36, 117], ['Marca', 153, 117], ['Número de serie', 270, 153], ['Concepto', 423, 153]
   ];
   need(16);
   y0 = yt;
-  R(36, y0, 540, 16, 0.88);
+  // (267) Encabezado VERDE #9BBB59 del original (antes gris 0.88).
+  R(36, y0, 540, 16, [0.608, 0.733, 0.349]);
   cols.forEach(function (cc) { T(cc[0], cc[1] + 4, y0 + 3, 'F2', 8); });
   yt += 16;
   equipos.forEach(function (eq) {
     need(16);
     y0 = yt;
     R(36, y0, 540, 16, null);
-    T(String(eq.modelo || '-').slice(0, 28), 40, y0 + 3, 'F1', 8);
-    T(String(eq.marca || '-').slice(0, 22), 190, y0 + 3, 'F1', 8);
-    T(String(eq.serie || '-').slice(0, 28), 310, y0 + 3, 'F1', 8);
-    T(String(eq.concepto || '-').slice(0, 22), 460, y0 + 3, 'F1', 8);
+    T(String(eq.modelo || '-').slice(0, 24), 40, y0 + 3, 'F1', 8);
+    T(String(eq.marca || '-').slice(0, 22), 157, y0 + 3, 'F1', 8);
+    T(String(eq.serie || '-').slice(0, 30), 274, y0 + 3, 'F1', 8);
+    T(String(eq.concepto || '-').slice(0, 30), 427, y0 + 3, 'F1', 8);
     yt += 16;
   });
   yt += 6;
@@ -5487,7 +5570,7 @@ function buildPdfCarta(c) {
   LN(180, y0 + 30, 432, y0 + 30);
   T(val(d.nombre), 306, y0 + 36, 'F1', 9, null, 'C');
   yt += 52;
-  return assemblePdfOps(pages, {}, { w: 612, h: 792 });
+  return assemblePdfOps(pages, { Lapi: logoLapiImg() }, { w: 612, h: 792 });
 }
 function acusePdfBlob(a) {
   var blob = buildPdfAcuse(a);
@@ -6227,7 +6310,7 @@ function cartaLeerForm() {
   var equipos = cartaEqFilas.map(function (r) {
     return { modelo: (r.modelo || '').trim(), marca: (r.marca || '').trim(), serie: (r.serie || '').trim(), concepto: (r.concepto || '').trim() };
   });
-  return { fecha: v('fCa-fecha'), nombre: v('fCa-nombre').trim(), colaborador: v('fCa-colaborador').trim(), sucursal: v('fCa-sucursal').trim(), puesto: v('fCa-puesto').trim(), jefe: v('fCa-jefe').trim(), ip: v('fCa-ip').trim(), observaciones: v('fCa-observaciones').trim(), equipos: equipos };
+  return { fecha: v('fCa-fecha'), nombre: v('fCa-nombre').trim(), colaborador: v('fCa-colaborador').trim(), sucursal: v('fCa-sucursal').trim(), puesto: v('fCa-puesto').trim(), area: v('fCa-area').trim(), jefe: v('fCa-jefe').trim(), ip: v('fCa-ip').trim(), observaciones: v('fCa-observaciones').trim(), equipos: equipos };
 }
 function cartaValidar(d) {
   var ok = true;
@@ -6251,7 +6334,7 @@ function cartaFolioLocal() {
   return String(n).padStart(5, '0');
 }
 function cartaLimpiarForm() {
-  ['fCa-nombre', 'fCa-colaborador', 'fCa-sucursal', 'fCa-puesto', 'fCa-jefe', 'fCa-ip', 'fCa-observaciones'].forEach(function (id) {
+  ['fCa-nombre', 'fCa-colaborador', 'fCa-sucursal', 'fCa-puesto', 'fCa-area', 'fCa-jefe', 'fCa-ip', 'fCa-observaciones'].forEach(function (id) {
     var el = document.getElementById(id);
     if (el) { el.value = ''; el.classList.remove('campo-falta'); }
   });
@@ -6271,6 +6354,7 @@ function cartaCargarEnForm(c) {
   set('fCa-colaborador', d.colaborador);
   set('fCa-sucursal', d.sucursal);
   set('fCa-puesto', d.puesto);
+  set('fCa-area', d.area);
   set('fCa-jefe', d.jefe);
   set('fCa-ip', d.ip);
   set('fCa-observaciones', d.observaciones);
@@ -6989,7 +7073,7 @@ document.getElementById('btnEuGuardar').addEventListener('click', function () {
   });
 });
 document.getElementById('btnReportar').addEventListener('click', function () {
-  window.location.href = 'mailto:gerardo.cruzhz@linux.com?subject=' + encodeURIComponent('Reporte de problema - Checklist de Soporte 266') + '&body=' + encodeURIComponent('Describe el problema:\n\n\nVersión de la app: 266');
+  window.location.href = 'mailto:gerardo.cruzhz@linux.com?subject=' + encodeURIComponent('Reporte de problema - Checklist de Soporte 267') + '&body=' + encodeURIComponent('Describe el problema:\n\n\nVersión de la app: 267');
 });
 
 boot();

@@ -5,6 +5,54 @@ del proyecto (memoria 2026-11-12 a 2026-11-17) y las series de tests
 (`tests/test20*.js`). Las versiones 2.0.1–2.0.4 no tienen registro y
 no se documentan con supuestos.
 
+## 2.5.17 — 2026-11-25
+
+- **PDF del Acuse Sistemas corregido para verse IGUAL que el formato
+  real.** El PDF de la 2.5.16 era una tablita simple sin logo, sin
+  título, sin línea naranja y con la fecha en formato inglés. Ahora,
+  de 1 página carta: logo Lapi real arriba a la izquierda (recortado
+  del encabezado del docx de la Carta Responsiva —
+  `www/assets/logo-lapi.jpg`, 276×161 px, también incrustado en
+  base64 en `index.html` para que el PDF lo lleve sin fetch;
+  compartido entre Acuse y Carta), título «ACUSE DE RECIBO» en
+  negrita 22 pt gris oscuro dentro de un rectángulo gris claro,
+  línea horizontal NARANJA de 2.5 pt bajo el encabezado, fecha
+  alineada a la derecha en español largo («30 de Octubre de 2026»),
+  bloque PARA / DE en negrita cursiva 24 pt con los valores desde
+  x=170 (~28% del ancho) y mucho espacio vertical entre filas,
+  ANEXO en texto normal 14 pt con el valor en negrita cursiva
+  SUBRAYADO, y tabla RECIBE de ancho completo con encabezado gris
+  #BFBFBF y «RECIBE:» centrado en negrita y 3 filas altas (54 pt)
+  con las etiquetas (Nombre / Fecha / Firma) en gris y las celdas
+  blancas vacías para escribir a mano. Comparación visual del PDF
+  generado (render a 150 dpi) contra la captura del formato real:
+  logo, título, línea, fecha, layout PARA / DE / ANEXO y tabla
+  RECIBE coinciden.
+- **Fecha en español largo en toda la app.** `fmtFechaLarga` ahora
+  devuelve día sin cero inicial + «de» + mes CON MAYÚSCULA + «de» +
+  año («25 de Noviembre de 2026»); afecta la fecha del Acuse, la
+  «Fecha de solicitud:» de la Carta y los títulos de las tarjetas de
+  guardados.
+- **Carta Responsiva re-verificada y corregida contra el docx
+  original.** Logo Lapi en imagen en el encabezado (antes solo
+  texto); tabla Código con líneas internas y etiquetas/valores en
+  negrita (antes sin rejilla interna); encabezado «Exclusivo de
+  Sistemas» en verde #9BBB59 (antes gris); anchos de columna según
+  el original (Modelo/Marca 117 pt, Número de serie/Concepto
+  153 pt); campo nuevo «Área» en el formulario y en DATOS DEL
+  SOLICITANTE (antes no existía). El PDF sigue en 2 páginas carta:
+  encabezado FO-SI-10 con folio, tabla de equipo, NOMBRE Y FIRMA
+  DEL USUARIO en p1 y las RESPONSABILIDADES VERBATIM en p2.
+  Comparación visual del PDF generado contra el docx original:
+  coincide.
+- Versión 2.5.17 / versionCode 71. El bundle de Firebase no cambió
+  (mismo md5 `d8ad9d102d13ef69925d7bdab65b9e33`). Tests:
+  `tests/test20267.js`, **937 true / 0 false** (serie nueva 267A–267F:
+  logo, fecha, línea naranja, RECIBE gris, Carta verde/Área).
+  ⚠️ Las reglas de Firestore de la 2.5.16 siguen sin publicarse:
+  Gerardo las pega en la consola de Firebase antes de que el guardado
+  en la nube funcione.
+
 ## 2.5.16 — 2026-11-25
 
 - **Dos formularios nuevos con PDF: «Acuse Sistemas» y «Carta
