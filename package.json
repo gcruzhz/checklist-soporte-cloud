@@ -22,6 +22,7 @@
     "@capacitor/share": "^8.0.3",
     "@capacitor/splash-screen": "^8.0.2",
     "@capgo/capacitor-native-biometric": "^8.9.3",
+    "@capgo/capacitor-printer": "^8.1.11",
     "firebase": "^11.10.0"
   },
   "devDependencies": {

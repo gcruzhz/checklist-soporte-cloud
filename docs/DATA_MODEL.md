@@ -256,11 +256,11 @@ nunca se actualiza ni se borra (reglas).
 Las reglas solo permiten subirlo de uno en uno y solo cambiar ese
 campo.
 
-## `acuses/{id}` y `cartas/{id}` — Acuse Sistemas y Carta Responsiva (2.5.16; folio al abrir desde 2.5.18)
+## `acuses/{id}` y `cartas/{id}` — Acuse Sistemas y Carta Responsiva (2.5.16; folio al abrir desde 2.5.18; desde 2.5.20 el Acuse ya NO lleva folio: ni campo, ni asignación al abrir, ni línea en el PDF — ver CHANGELOG 2.5.20)
 
 | Campo | Tipo / valor |
 |---|---|
-| `folio` | string de 5 dígitos, asignado AL ABRIR el formulario (transacción `config/foliosAcuse` / `config/foliosCarta`). |
+| `folio` | Carta: string de 5 dígitos, asignado AL ABRIR el formulario (transacción `config/foliosCarta`). Acuse: sin folio desde 2.5.20 (los documentos viejos pueden traerlo, el PDF lo ignora). |
 | `creadoPor` / `creadoPorNombre` / `creadoEn` | uid, nombre y fecha de creación. |
 | `datos` | Acuse: `{fecha, para, de, anexo}`. Carta: `{fecha, nombre, colaborador, sucursal, puesto, area, jefe, ip, observaciones, equipos: [{modelo, marca, serie, concepto}]}`. |
 | `pendienteSync` | boolean, **solo local (nunca viaja a la nube)**. `true` cuando el guardado en la nube falló: el documento queda en el teléfono (`localStorage`, mismas claves que los guardados locales) y se marca «⏳ Pendiente de sincronizar» en la lista. La app lo reintenta sola al abrir la vista y al recuperar conexión (`online`), o con el botón «🔄 Reintentar» de la tarjeta. El reintento usa `upsert` con el MISMO id y folio, así el folio no se duplica. |
@@ -272,10 +272,10 @@ campo.
 | `siguiente` | int. Próximo folio a asignar; empieza en 1. La transacción `asignarFolioCarta()` / `asignarFolioAcuse()` lo lee, devuelve el folio con 5 dígitos y lo sube en 1. |
 
 Son secuencias INDEPENDIENTES: el folio de la Carta y el del Acuse
-no se mezclan. El folio se asigna AL ABRIR el formulario (no al
+no se mezclan. El folio de la Carta se asigna AL ABRIR el formulario (no al
 guardar); si se abandona sin guardar, queda consumido (hueco en la
-numeración). Los documentos `acuses/{id}` y `cartas/{id}` llevan el
-folio en el campo `folio` (string de 5 dígitos). Las reglas son
+numeración). Solo los documentos `cartas/{id}` llevan el folio en el campo
+`folio` (string de 5 dígitos); desde 2.5.20 el Acuse ya no lo lleva. Las reglas son
 espejo de `config/folios`: solo subir de uno en uno y solo ese campo.
 
 ⚠️ Las reglas de `acuses`, `cartas`, `config/foliosCarta` y

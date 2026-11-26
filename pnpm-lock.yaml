@@ -41,6 +41,9 @@ importers:
       '@capgo/capacitor-native-biometric':
         specifier: ^8.9.3
         version: 8.9.3(@capacitor/core@8.6.0)
+      '@capgo/capacitor-printer':
+        specifier: ^8.1.11
+        version: 8.1.11(@capacitor/core@8.6.0)
       firebase:
         specifier: ^11.10.0
         version: 11.10.0
@@ -108,6 +111,11 @@ packages:
 
   '@capgo/capacitor-native-biometric@8.9.3':
     resolution: {integrity: sha512-bH3ZupGr3ocetX546rBvYSuccWy2P45kWu+RXVPXBVpXidQVF/iX8mB0pzPzDCJhEa7XZBi8qKyoaowpmb3sbw==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
+
+  '@capgo/capacitor-printer@8.1.11':
+    resolution: {integrity: sha512-Vsp5kcBEeFxgyUkJlfz8odktSp+ikRUXvPVAz1nqPfKi/nAJFEsi/hxAwFk8sssZv6Q4L8s2ol4YhNrsmNI3Kg==}
     peerDependencies:
       '@capacitor/core': '>=8.0.0'
 
@@ -1356,6 +1364,10 @@ snapshots:
   '@capacitor/synapse@1.0.4': {}
 
   '@capgo/capacitor-native-biometric@8.9.3(@capacitor/core@8.6.0)':
+    dependencies:
+      '@capacitor/core': 8.6.0
+
+  '@capgo/capacitor-printer@8.1.11(@capacitor/core@8.6.0)':
     dependencies:
       '@capacitor/core': 8.6.0
 

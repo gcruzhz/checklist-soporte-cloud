@@ -543,26 +543,27 @@ async function archivarResponsiva(id, archivado) {
     : { archivado: false, archivadoEn: null });
 }
 
-// Acuses de Sistemas (2.5.16; folio desde 2.5.18): acuse de recibido
-// de documentos, con folio de 5 dígitos asignado AL ABRIR el
-// formulario (la app lo pasa ya asignado; si no viene, crearAcuse lo
-// asigna con asignarFolioAcuse). Sin página pública. El documento
-// lleva creadoPor, creadoPorNombre, creadoEn, folio y datos {fecha,
-// para, de, anexo}. uidOpcional filtra por creadoPor (lo usan los
-// usuarios normales para que las reglas permitan la lectura); sin él
-// el admin suscribe todo.
+// Acuses de Sistemas (2.5.16; SIN folio desde 2.5.20): acuse de
+// recibido de documentos. El formato original no lleva folio y la app
+// ya no asigna ni consume ninguno al abrir el formulario; crearAcuse
+// solo guarda el folio si quien llama pasa uno explícito (compat. con
+// documentos viejos). Sin página pública. El documento lleva
+// creadoPor, creadoPorNombre, creadoEn y datos {fecha, para, de,
+// anexo}. uidOpcional filtra por creadoPor (lo usan los usuarios
+// normales para que las reglas permitan la lectura); sin él el admin
+// suscribe todo.
 async function crearAcuse(datos, creadoPorNombre, folio) {
   const u = auth.currentUser;
   if (!u) throw new Error('no-auth');
-  const f = folio || (await asignarFolioAcuse());
   const ref = doc(collection(db, 'acuses'));
-  await setDoc(ref, {
+  const data = {
     creadoPor: u.uid,
     creadoPorNombre: creadoPorNombre || u.email || '',
     creadoEn: Date.now(),
-    folio: f,
     datos: datos || {}
-  });
+  };
+  if (folio) data.folio = folio;
+  await setDoc(ref, data);
   return ref.id;
 }
 

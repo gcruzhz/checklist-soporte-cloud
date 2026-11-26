@@ -19,3 +19,6 @@ project(':capacitor-splash-screen').projectDir = new File('../node_modules/.pnpm
 
 include ':capgo-capacitor-native-biometric'
 project(':capgo-capacitor-native-biometric').projectDir = new File('../node_modules/.pnpm/@capgo+capacitor-native-biometric@8.9.3_@capacitor+core@8.6.0/node_modules/@capgo/capacitor-native-biometric/android')
+
+include ':capgo-capacitor-printer'
+project(':capgo-capacitor-printer').projectDir = new File('../node_modules/.pnpm/@capgo+capacitor-printer@8.1.11_@capacitor+core@8.6.0/node_modules/@capgo/capacitor-printer/android')

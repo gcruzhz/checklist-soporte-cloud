@@ -5,6 +5,94 @@ del proyecto (memoria 2026-11-12 a 2026-11-17) y las series de tests
 (`tests/test20*.js`). Las versiones 2.0.1–2.0.4 no tienen registro y
 no se documentan con supuestos.
 
+## 2.5.21 — 2026-11-26
+
+- **Botón «🖨️ Imprimir» arreglado de raíz en el teléfono (Carta y
+  Acuse).** Causa real: la 2.5.20 abría el PDF en un iframe oculto y
+  llamaba a `contentWindow.print()`, pero el WebView de Android
+  (Capacitor) ignora `window.print()` y no renderiza PDFs en iframes:
+  era un no-op silencioso, sin error, por eso «no hacía nada».
+  Ahora `imprimirPdfDoc()` tiene 3 rutas: (1) en Android/iOS nativo
+  guarda el PDF con Filesystem (CACHE) y lo imprime con el plugin
+  nuevo `@capgo/capacitor-printer` 8.1.11 (`Printer.printPdf`, que usa
+  el PrintManager de Android y abre el diálogo de impresión del
+  sistema); (2) si el plugin no está o falla, abre el PDF guardado
+  con FileOpener (el visor de PDF del sistema, que sí tiene Imprimir)
+  y si tampoco hay visor lo comparte con Share; en el teléfono NUNCA
+  se usa el iframe; (3) en escritorio (Electron) y navegador se
+  conserva el iframe oculto + `window.print()`, que ahí sí funciona.
+  Se descartaron: el plugin Cordova de katzer (0.8.0, sin actualizar
+  desde 2022, librerías Android obsoletas, no pensado para Capacitor
+  8) y el plugin de Capawesome (de pago, solo para suscriptores).
+  El plugin quedó registrado en Android (`com.capgo.printer.
+  PrinterPlugin` en `capacitor.plugins.json`, vía `npx cap sync`) y
+  su JS en `www/cap-plugins/printer-plugin.js`. La impresión en una
+  impresora física real sigue pendiente de prueba por Gerardo.
+
+## 2.5.20 — 2026-11-26
+
+- **Sin duplicados en «Cartas guardadas» (y «Acuses guardados»).**
+  Causa real, 3 vías: (a) la suscripción de la nube llegaba entre el
+  `crearCarta`/`crearAcuse` y el `push` local, y el push
+  incondicional metía la 2ª copia con el MISMO id (el `merge*` solo
+  dedupaba si la copia local ya estaba en el array); (b) doble toque
+  en Guardar: dos `crear*` concurrentes creaban dos documentos con
+  el mismo folio; (c) el `crear*` fallaba DESPUÉS de escribir en la
+  nube y el respaldo local tomaba un id nuevo, así que el reintento
+  con `upsert` dejaba un 2º documento con el mismo folio. Corrección:
+  `dedupeDocs()` por id (gana la copia no pendiente) y por folio
+  (mismo folio = mismo documento), aplicado en `merge*`, al guardar
+  (dedupe en vez de push), al cargar local y al renderizar; y guarda
+  en curso (`cartaGuardando`/`acuseGuardando`) que bloquea el doble
+  toque. UN documento = UNA entrada por todos los caminos.
+- **El Acuse de Recibo NO lleva folio (corrección de 2.5.18).**
+  Gerardo confirmó que el formato original del Acuse no tiene folio:
+  se quitó la línea «FOLIO: …» del PDF, el campo del formulario, la
+  asignación/consumo de folio al abrir (ni nube ni local) y el folio
+  de la tarjeta y de los textos de WhatsApp/correo. El PDF ignora el
+  folio aunque un documento viejo lo traiga. `crearAcuse` en
+  `firebase.js` ya no pide `asignarFolioAcuse()` cuando no se le pasa
+  folio (antes gastaba un número que nadie veía); la función y las
+  reglas de `config/foliosAcuse` se quedan como están, sin tocar.
+  La Carta SÍ conserva su folio en todos lados (formulario, PDF,
+  tarjeta, textos).
+- **Botón «🖨️ Imprimir» en Carta y Acuse** (formulario y lista de
+  guardados): `imprimirPdfDoc()` abre el PDF generado en un iframe
+  oculto y llama a `print()` en su ventana, lo que abre el diálogo
+  de impresión del sistema (WebView del teléfono y Electron de
+  escritorio); si el iframe no puede imprimir, usa `window.print`
+  como respaldo. La impresión en una impresora física real sigue
+  pendiente de prueba por Gerardo.
+- Tests `tests/test20270.js`: **996 true / 0 false** (serie 270;
+  nuevas 270A–270F: versión y bundle nuevo, dedupe sin duplicados,
+  doble Guardar no duplica, Acuse sin folio de extremo a extremo +
+  Carta con folio, Imprimir en formulario y en tarjeta; 268D/268E/
+  268F y 269E actualizadas al Acuse sin folio). Bundle de Firebase
+  NUEVO (firebase.js cambió: `crearAcuse` sin folio), md5
+  `c4fb1cce63c0d71ae96b1aee931ee740`; `www/index.html` md5
+  `d0ae3c865687cd54bc33cd62410ebf31`. Humo
+  `scripts/smoke-270-formatos.js` (escritorio): Acuse sin folio,
+  Carta con folio, Imprimir crea el iframe oculto del PDF y llama a
+  print() (contado 1 en Acuse y 2 en Carta; el diálogo nativo se
+  sustituye por un stub en el humo porque en Electron bloquearía el
+  renderer — el primer intento se colgó en 5c y se corrigió el humo,
+  no la app).
+- APK versionCode 74, 15,813,825 B, md5
+  `85946f4d3036c4aa5fe1726b193d9b81` (firma permanente, apksigner: v2,
+  1 firmante, SHA-256 del keystore `a82a9e16…`). Escritorio 2.5.20:
+  AppImage 123,362,968 B md5 `bab27815ce68af02beba344e55dce80e`;
+  .deb 97,158,716 B md5 `45ac0511c8d10261eface4e3625d45c0`; .rpm
+  86,226,153 B md5 `254e0eee30374ae9a7e71a553adc2639`; Windows
+  portable .exe 99,177,929 B md5
+  `367e3ad518206ab99274ed21281bf1bd` y su ZIP 99,173,499 B md5
+  `ac3e0f7b8f8706a9f572001f4e1c0ba8`; app.asar md5
+  `54722be8af69d643769b8cabb986ea7f`, modo 644 en los tres paquetes
+  Linux (y el mismo app.asar dentro del .exe Windows). Humo
+  `scripts/smoke-270-formatos.js`: VEREDICTO OK (también como
+  usuario `nobody` sobre el AppImage extraído, viva 33 s sin errores
+  de acceso a app.asar; el error `synapse is not defined` en consola
+  es preexistente desde 2.4.0, no es de esta versión).
+
 ## 2.5.19 — 2026-11-25
 
 - **PDF de la Carta Responsiva: Área y Jefe Directo ya no van
