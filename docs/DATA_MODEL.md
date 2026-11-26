@@ -256,6 +256,15 @@ nunca se actualiza ni se borra (reglas).
 Las reglas solo permiten subirlo de uno en uno y solo cambiar ese
 campo.
 
+## `acuses/{id}` y `cartas/{id}` — Acuse Sistemas y Carta Responsiva (2.5.16; folio al abrir desde 2.5.18)
+
+| Campo | Tipo / valor |
+|---|---|
+| `folio` | string de 5 dígitos, asignado AL ABRIR el formulario (transacción `config/foliosAcuse` / `config/foliosCarta`). |
+| `creadoPor` / `creadoPorNombre` / `creadoEn` | uid, nombre y fecha de creación. |
+| `datos` | Acuse: `{fecha, para, de, anexo}`. Carta: `{fecha, nombre, colaborador, sucursal, puesto, area, jefe, ip, observaciones, equipos: [{modelo, marca, serie, concepto}]}`. |
+| `pendienteSync` | boolean, **solo local (nunca viaja a la nube)**. `true` cuando el guardado en la nube falló: el documento queda en el teléfono (`localStorage`, mismas claves que los guardados locales) y se marca «⏳ Pendiente de sincronizar» en la lista. La app lo reintenta sola al abrir la vista y al recuperar conexión (`online`), o con el botón «🔄 Reintentar» de la tarjeta. El reintento usa `upsert` con el MISMO id y folio, así el folio no se duplica. |
+
 ## `config/foliosCarta` y `config/foliosAcuse` — contadores de folios de Carta y Acuse (2.5.18)
 
 | Campo | Tipo / valor |
@@ -270,9 +279,13 @@ folio en el campo `folio` (string de 5 dígitos). Las reglas son
 espejo de `config/folios`: solo subir de uno en uno y solo ese campo.
 
 ⚠️ Las reglas de `acuses`, `cartas`, `config/foliosCarta` y
-`config/foliosAcuse` (desde 2.5.16) siguen sin publicarse: Gerardo
-las pega en la consola de Firebase antes de que el guardado en la
-nube funcione.
+`config/foliosAcuse` (desde 2.5.16) se publicaron con la CLI de
+Firebase el 2026-11-25 (versión 2.5.19): `firebase deploy --only
+firestore:rules` terminó con «✔ firestore: released rules
+firestore.rules to cloud.firestore». El guardado en la nube ya no
+debería dar `permission denied`; si vuelve a fallar, el aviso de la
+app ahora dice la causa real (ver 2.5.19) y el documento queda
+guardado en el teléfono como pendiente de sincronizar.
 
 ## `config/ai` — claves de IA
 

@@ -180,7 +180,7 @@
     <img class="login-logo" src="lab-icon.png" alt="Checklist de Soporte">
     <h1>Checklist de Soporte</h1>
     <p class="login-sub">Ingresa con tu usuario para ver y registrar equipos.</p>
-    <p class="login-sub" style="font-size:11px;color:#999">Versión 2.5.18</p>
+    <p class="login-sub" style="font-size:11px;color:#999">Versión 2.5.19</p>
     <div id="loginBox">
       <form id="loginForm">
         <div class="field"><label>Usuario o correo</label><input id="loginEmail" type="text" placeholder="usuario o tu@correo.com" autocomplete="username"></div>
@@ -233,7 +233,7 @@
 </header>
 
 <main id="mainApp" hidden>
-  <div class="session-bar" id="sessionBar" hidden><span id="sessionUser"></span><button class="btn-ghost" id="btnPassOpen">🔑 Contraseña</button><button class="btn-ghost" id="btnLogout">Cerrar sesión</button></div>
+  <div class="session-bar" id="sessionBar" hidden><span id="sessionUser"></span><button class="btn-ghost" id="btnPassOpen">🔑 Contraseña</button><button class="btn-ghost" id="btnUsuarios" hidden>👥 Usuarios</button><button class="btn-ghost" id="btnLogout">Cerrar sesión</button></div>
   <div class="card" id="viewCuenta" hidden>
     <b>Cambiar mi contraseña</b>
     <div class="field"><label>Contraseña actual</label><input type="password" id="fPassActual" placeholder="Tu contraseña actual"></div>
@@ -246,13 +246,11 @@
     <div class="share-note">Entra con tu huella o tu rostro sin escribir la contraseña, solo en este teléfono.</div>
     <div class="actions"><button class="btn-dark" id="btnBioEnable">👆 Activar acceso con huella</button><button class="btn-ghost" id="btnBioDisable" hidden>Quitar acceso con huella</button></div>
   </div>
+  <!-- (269) Barra superior sin repetir: solo Inicio y Equipo. Las
+  secciones se abren desde las tarjetas grandes de Inicio; Usuarios
+  (solo admin) se abre desde el botón de la barra de sesión. -->
   <div class="tabs" id="tabs">
-    <button class="tab" data-v="inicio">🏠 Inicio</button>
-    <button class="tab on" data-v="preparar">🖥️ Por preparar</button>
-    <button class="tab" data-v="rec">📥 Recibir renta</button>
-    <button class="tab" data-v="for">📦 Entrega Renta</button>
-    <button class="tab" data-v="mant">🔧 Mantenimientos</button>
-    <button class="tab" data-v="usuarios" id="tabUsuarios" hidden>👥 Usuarios</button>
+    <button class="tab on" data-v="inicio">🏠 Inicio</button>
     <button class="tab" data-v="equipo" id="tabEquipo">💬 Equipo</button>
   </div>
   <div id="viewInicio" hidden>
@@ -421,7 +419,7 @@
   <div class="card">
     <b>Acerca de</b>
     <div class="line">App: Checklist de Soporte</div>
-    <div class="line">Versión: 2.5.18</div>
+    <div class="line">Versión: 2.5.19</div>
     <div class="line" id="focusDiag">Foco: — · Elemento activo: —</div>
     <div class="line">Contacto: <a href="mailto:gerardo.cruzhz@linux.com">gerardo.cruzhz@linux.com</a></div>
     <div class="sub">© Gerardo Cruz Hernandez</div>
@@ -788,6 +786,11 @@ function updateFocusDiag() {
 if (typeof window.addEventListener === 'function') {
   window.addEventListener('focus', updateFocusDiag);
   window.addEventListener('blur', updateFocusDiag);
+}
+// (269) Al recuperar conexión, reintentar los acuses y cartas
+// guardados en el teléfono y marcados pendientes de sincronizar.
+if (typeof window.addEventListener === 'function') {
+  window.addEventListener('online', function () { acuseReintentarPendientes(); cartaReintentarPendientes(); });
 }
 var LS_KEY = 'checklist-soporte-v1';
 var GROUPS = { hardware: 'Equipo y hardware', software: 'Software', datos: 'Datos del usuario' };
@@ -1386,7 +1389,10 @@ function prefillTecnico() {
 }
 function applyRoleUI() {
   var isAdmin = cloudRole === 'admin';
-  document.getElementById('tabUsuarios').hidden = !isAdmin;
+  // (269) Usuarios ya no es pestaña: es el botón de la barra de
+  // sesión, solo para el admin (la vista sigue existiendo).
+  var btnUsu = document.getElementById('btnUsuarios');
+  if (btnUsu) btnUsu.hidden = !isAdmin;
   var auRow = document.getElementById('adminUserRow');
   if (auRow) auRow.hidden = !isAdmin;
   if (isAdmin) refreshAdminUserFilter();
@@ -5430,10 +5436,12 @@ var CARTA_RESPONSABILIDADES = [
 // actualización 25-sep-23, Página 1 de 2, con bordes y negritas),
 // Seguridad/Fecha/FOLIO en una línea, DATOS DEL SOLICITANTE con cada
 // campo en su CELDA CON BORDE como el original (izq.: Nombre, Número,
-// Sucursal, Puesto; der.: Ip de Red y «Área: Jefe Directo:»;
-// Observaciones en caja larga), tabla Exclusivo de Sistemas con
-// encabezado VERDE #9BBB59 y divisores verticales, y Nombre y firma
-// del usuario; p2 con las responsabilidades verbatim y la firma final.
+// Sucursal, Puesto; der.: Ip de Red, Área y Jefe Directo, cada uno en
+// su propia caja apilada — 269: antes Área y Jefe Directo iban juntos
+// en una sola celda «Área: Jefe Directo:»); Observaciones en caja
+// larga), tabla Exclusivo de Sistemas con encabezado VERDE #9BBB59 y
+// divisores verticales, y Nombre y firma del usuario; p2 con las
+// responsabilidades verbatim y la firma final.
 // El folio ya viene asignado al abrir el formulario (no al guardar).
 function buildPdfCarta(c) {
   var d = (c && c.datos) || {};
@@ -5494,9 +5502,9 @@ function buildPdfCarta(c) {
   // Datos del solicitante (268): como el formato original FO-SI-10 —
   // cada campo en su CELDA CON BORDE VISIBLE. Columna izquierda (4
   // cajas apiladas): Nombre, Número, Sucursal, Puesto; columna derecha:
-  // Ip de Red (ocupa las 2 primeras filas) y «Área: Jefe Directo:»
-  // (última fila; un solo campo del original que junta los dos valores
-  // del formulario, Área y Jefe Directo). Observaciones como caja larga
+  // Ip de Red (ocupa las 2 primeras filas), Área (tercera fila) y Jefe
+  // Directo (última fila) — (269) cada uno en SU propia caja con borde,
+  // ya no juntos en una sola celda. Observaciones como caja larga
   // de ancho completo con borde. Medidas de la captura del original:
   // etiquetas en negrita a la derecha de su caja, cajas izq. x=146
   // w=184, der. x=410 w=166, filas de 22 pt.
@@ -5519,8 +5527,11 @@ function buildPdfCarta(c) {
   cajaCampo('Sucursal:', d.sucursal, 140, 146, DAT_Y + 2 * DAT_RH, 184, DAT_RH);
   cajaCampo('Puesto:', d.puesto, 140, 146, DAT_Y + 3 * DAT_RH, 184, DAT_RH);
   cajaCampo('Ip de Red:', d.ip, 404, 410, DAT_Y, 166, 2 * DAT_RH);
-  var jefeVal = [d.area, d.jefe].filter(function (s) { return s; }).join(' — ');
-  cajaCampo('Área: Jefe Directo:', jefeVal, 404, 410, DAT_Y + 3 * DAT_RH, 166, DAT_RH);
+  // (269) Área y Jefe Directo en DOS cajas apiladas, cada una con su
+  // borde visible, como las demás del formato (antes iban juntas en
+  // una sola celda «Área: Jefe Directo:» con los valores unidos).
+  cajaCampo('Área:', d.area, 404, 410, DAT_Y + 2 * DAT_RH, 166, DAT_RH);
+  cajaCampo('Jefe Directo:', d.jefe, 404, 410, DAT_Y + 3 * DAT_RH, 166, DAT_RH);
   yt = DAT_Y + 4 * DAT_RH + 4;
   // Observaciones: etiqueta arriba, caja larga de ancho completo.
   T('Observaciones:', 82, yt, 'F2', 9);
@@ -6201,6 +6212,23 @@ function acuseCargarEnForm(a) {
   if (!a.folio) acuseAsignarFolio();
 }
 function acuseFind(id) { var f = null; acuses.forEach(function (x) { if (x.id === id) f = x; }); return f; }
+// (269) Mensaje de error de guardado en la nube según la CAUSA REAL
+// (nada de aviso genérico): permission-denied = las reglas de
+// Firestore no están publicadas en la consola de Firebase (la causa
+// más probable cuando el guardado falla con conexión); unavailable o
+// sin red = sin conexión; cualquier otro error = su código. En todos
+// los casos el dato queda guardado en el teléfono (pendienteSync).
+function mensajeErrorNube(e, que) {
+  var code = (e && e.code) || '';
+  if (code === 'permission-denied') return 'Faltan las reglas de Firestore en la consola de Firebase: el guardado en la nube está bloqueado. ' + que + ' se guardó en el teléfono (pendiente de sincronizar).';
+  if (code === 'unavailable' || (typeof navigator !== 'undefined' && navigator.onLine === false)) return 'Sin conexión: ' + que + ' se guardó en el teléfono y se subirá cuando vuelva la red.';
+  return 'No se pudo guardar ' + que + ' en la nube (' + (code || (e && e.message) || 'error desconocido') + '). Se guardó en el teléfono (pendiente de sincronizar).';
+}
+// (269) Copia del registro para la nube, SIN el marcador local
+// pendienteSync (es solo del teléfono: si viajara, la nube lo
+// devolvería y la tarjeta seguiría marcada pendiente para siempre).
+function acuseDocNube(a) { var c = Object.assign({}, a); delete c.pendienteSync; return c; }
+function cartaDocNube(c) { var d = Object.assign({}, c); delete d.pendienteSync; return d; }
 async function acuseGuardar() {
   var d = acuseLeerForm();
   if (!acuseValidar(d)) { showToast('Faltan datos obligatorios: Para y De.'); return false; }
@@ -6217,7 +6245,19 @@ async function acuseGuardar() {
         var newId = await window.Cloud.crearAcuse(d, technicianName(), folio);
         a = { id: newId, folio: folio, creadoEn: Date.now(), creadoPor: cloudUser.uid, creadoPorNombre: technicianName(), datos: d };
         acuses.push(a);
-      } catch (e) { showToast('No se pudo guardar el acuse en la nube. Revisa tu conexión.'); return false; }
+      } catch (e) {
+        // (269) La nube falló: el acuse queda guardado EN EL TELÉFONO
+        // (mismo folio, marcado pendiente de sincronizar) para que
+        // nada se pierda; se reintenta solo al abrir la vista o al
+        // volver la red, o con el botón «Reintentar» de la tarjeta.
+        a = { id: uid(), folio: folio, creadoEn: Date.now(), creadoPor: cloudUser.uid, creadoPorNombre: technicianName(), datos: d, pendienteSync: true };
+        acuses.push(a);
+        saveAcuseLocal();
+        acuseEditId = a.id;
+        renderAcuseList();
+        showToast(mensajeErrorNube(e, 'el acuse'));
+        return true;
+      }
     } else {
       a = { id: uid(), folio: folio, creadoEn: Date.now(), creadoPor: (cloudUser && cloudUser.uid) || '', creadoPorNombre: technicianName(), datos: d };
       acuses.push(a);
@@ -6226,7 +6266,8 @@ async function acuseGuardar() {
     a.datos = d;
     if (!a.folio && folio) a.folio = folio;
     if (CLOUD_ENABLED && cloudUser && window.Cloud && window.Cloud.upsertAcuse) {
-      try { await window.Cloud.upsertAcuse(a); } catch (e) { showToast('No se pudo guardar el acuse en la nube. Revisa tu conexión.'); return false; }
+      try { await window.Cloud.upsertAcuse(acuseDocNube(a)); a.pendienteSync = false; }
+      catch (e) { a.pendienteSync = true; saveAcuseLocal(); renderAcuseList(); showToast(mensajeErrorNube(e, 'el acuse')); acuseEditId = a.id; return true; }
     }
   }
   if (folioEl) folioEl.value = a.folio || '';
@@ -6235,6 +6276,29 @@ async function acuseGuardar() {
   renderAcuseList();
   showToast('Acuse guardado con folio ' + (a.folio || '—') + '.');
   return true;
+}
+// (269) Reintento de sincronización del acuse: sube un guardado
+// pendiente con upsert y el MISMO id y folio (nunca crear: el folio
+// no se duplica). Al lograrlo se quita el marcador pendiente.
+async function acuseReintentarSync(id) {
+  var a = acuseFind(id);
+  if (!a || !a.pendienteSync) return false;
+  if (!CLOUD_ENABLED || !cloudUser || !window.Cloud || !window.Cloud.upsertAcuse) return false;
+  try {
+    await window.Cloud.upsertAcuse(acuseDocNube(a));
+    a.pendienteSync = false;
+    saveAcuseLocal();
+    renderAcuseList();
+    showToast('Acuse con folio ' + (a.folio || '—') + ' sincronizado.');
+    return true;
+  } catch (e) { showToast(mensajeErrorNube(e, 'el acuse')); return false; }
+}
+// (269) Reintenta SOLO todos los pendientes: al abrir la vista y al
+// recuperar conexión (ver el listener 'online'). Sin nube no hace nada.
+async function acuseReintentarPendientes() {
+  if (!CLOUD_ENABLED || !cloudUser) return;
+  var pend = acuses.filter(function (a) { return a.pendienteSync; });
+  for (var i = 0; i < pend.length; i++) { await acuseReintentarSync(pend[i].id); }
 }
 function acusePuedeBorrar(a) {
   if (!CLOUD_ENABLED || !cloudUser) return true;
@@ -6246,10 +6310,13 @@ function acuseCardHtml(a) {
     '<div class="sub">Para: ' + esc(d.para || '—') + ' · De: ' + esc(d.de || '—') + '</div>';
   if (d.anexo) html += '<div class="sub">Anexo: ' + esc(d.anexo) + '</div>';
   html += '<div class="sub">Creado por ' + esc(a.creadoPorNombre || '—') + (a.creadoEn ? ' · ' + fmtDate(a.creadoEn) : '') + '</div>';
+  // (269) Guardado pendiente: se ve en la lista y se puede reintentar.
+  if (a.pendienteSync) html += '<div class="sub">⏳ Pendiente de sincronizar</div>';
   html += '<div class="actions"><button class="btn-green" data-acuse-open="' + esc(a.id) + '">📝 Abrir</button>' +
     '<button class="btn-dark" data-acuse-pdf="' + esc(a.id) + '">📄 PDF</button>' +
     '<button class="btn-green" data-acuse-wa="' + esc(a.id) + '">📲 PDF por WhatsApp</button>' +
     '<button class="btn-dark" data-acuse-mail="' + esc(a.id) + '">✉️ PDF por correo</button>';
+  if (a.pendienteSync) html += '<button class="btn-dark" data-acuse-retry="' + esc(a.id) + '">🔄 Reintentar</button>';
   if (acusePuedeBorrar(a)) html += '<button class="btn-danger" data-acuse-del="' + esc(a.id) + '">🗑️ Eliminar</button>';
   return html + '</div></div>';
 }
@@ -6287,7 +6354,7 @@ async function acuseCompartirPdf(a, via) {
 function acuseListClick(e) {
   var t = e.target;
   var q = function (attr) { var el = t.closest('[' + attr + ']'); return el ? el.getAttribute(attr) : null; };
-  var id = q('data-acuse-open') || q('data-acuse-pdf') || q('data-acuse-wa') || q('data-acuse-mail') || q('data-acuse-del');
+  var id = q('data-acuse-open') || q('data-acuse-pdf') || q('data-acuse-wa') || q('data-acuse-mail') || q('data-acuse-retry') || q('data-acuse-del');
   if (!id) return;
   var a = acuseFind(id);
   if (!a) return;
@@ -6295,6 +6362,8 @@ function acuseListClick(e) {
   if (t.closest('[data-acuse-pdf]')) { acuseCompartirPdf(a, 'pdf'); return; }
   if (t.closest('[data-acuse-wa]')) { acuseCompartirPdf(a, 'wa'); return; }
   if (t.closest('[data-acuse-mail]')) { acuseCompartirPdf(a, 'mail'); return; }
+  // (269) Reintentar la sincronización de un guardado pendiente.
+  if (t.closest('[data-acuse-retry]')) { acuseReintentarSync(id); return; }
   if (t.closest('[data-acuse-del]')) {
     if (!acusePuedeBorrar(a)) return;
     showConfirm('¿Eliminar este acuse?').then(function (ok) { if (ok) acuseEliminar(id); });
@@ -6458,7 +6527,19 @@ async function cartaGuardar() {
         var created = await window.Cloud.crearCarta(d, technicianName(), folio);
         c = { id: created.id, folio: created.folio, creadoEn: Date.now(), creadoPor: cloudUser.uid, creadoPorNombre: technicianName(), datos: d };
         cartas.push(c);
-      } catch (e) { showToast('No se pudo guardar la carta en la nube. Revisa tu conexión.'); return false; }
+      } catch (e) {
+        // (269) La nube falló: la carta queda guardada EN EL TELÉFONO
+        // (mismo folio, marcada pendiente de sincronizar) para que
+        // nada se pierda; se reintenta solo al abrir la vista o al
+        // volver la red, o con el botón «Reintentar» de la tarjeta.
+        c = { id: uid(), folio: folio, creadoEn: Date.now(), creadoPor: cloudUser.uid, creadoPorNombre: technicianName(), datos: d, pendienteSync: true };
+        cartas.push(c);
+        saveCartaLocal();
+        cartaEditId = c.id;
+        renderCartaList();
+        showToast(mensajeErrorNube(e, 'la carta'));
+        return true;
+      }
     } else {
       c = { id: uid(), folio: folio, creadoEn: Date.now(), creadoPor: (cloudUser && cloudUser.uid) || '', creadoPorNombre: technicianName(), datos: d };
       cartas.push(c);
@@ -6467,7 +6548,8 @@ async function cartaGuardar() {
     c.datos = d;
     if (!c.folio && folio) c.folio = folio;
     if (CLOUD_ENABLED && cloudUser && window.Cloud && window.Cloud.upsertCarta) {
-      try { await window.Cloud.upsertCarta(c); } catch (e) { showToast('No se pudo guardar la carta en la nube. Revisa tu conexión.'); return false; }
+      try { await window.Cloud.upsertCarta(cartaDocNube(c)); c.pendienteSync = false; }
+      catch (e) { c.pendienteSync = true; saveCartaLocal(); renderCartaList(); showToast(mensajeErrorNube(e, 'la carta')); cartaEditId = c.id; return true; }
     }
   }
   var fEl = document.getElementById('fCa-folio');
@@ -6477,6 +6559,29 @@ async function cartaGuardar() {
   renderCartaList();
   showToast('Carta guardada con folio ' + (c.folio || '—') + '.');
   return true;
+}
+// (269) Reintento de sincronización de la carta: sube un guardado
+// pendiente con upsert y el MISMO id y folio (nunca crear: el folio
+// no se duplica). Al lograrlo se quita el marcador pendiente.
+async function cartaReintentarSync(id) {
+  var c = cartaFind(id);
+  if (!c || !c.pendienteSync) return false;
+  if (!CLOUD_ENABLED || !cloudUser || !window.Cloud || !window.Cloud.upsertCarta) return false;
+  try {
+    await window.Cloud.upsertCarta(cartaDocNube(c));
+    c.pendienteSync = false;
+    saveCartaLocal();
+    renderCartaList();
+    showToast('Carta con folio ' + (c.folio || '—') + ' sincronizada.');
+    return true;
+  } catch (e) { showToast(mensajeErrorNube(e, 'la carta')); return false; }
+}
+// (269) Reintenta SOLO todos los pendientes: al abrir la vista y al
+// recuperar conexión (ver el listener 'online'). Sin nube no hace nada.
+async function cartaReintentarPendientes() {
+  if (!CLOUD_ENABLED || !cloudUser) return;
+  var pend = cartas.filter(function (c) { return c.pendienteSync; });
+  for (var i = 0; i < pend.length; i++) { await cartaReintentarSync(pend[i].id); }
 }
 function cartaPuedeBorrar(c) {
   if (!CLOUD_ENABLED || !cloudUser) return true;
@@ -6488,10 +6593,13 @@ function cartaCardHtml(c) {
   var html = '<div class="card"><b>Carta Responsiva · Folio ' + esc(c.folio || '—') + '</b>' +
     '<div class="sub">' + esc(d.nombre || '—') + (d.sucursal ? ' · ' + esc(d.sucursal) : '') + ' · ' + nEq + (nEq === 1 ? ' equipo' : ' equipos') + '</div>' +
     '<div class="sub">Creada por ' + esc(c.creadoPorNombre || '—') + (c.creadoEn ? ' · ' + fmtDate(c.creadoEn) : '') + '</div>' +
+    // (269) Guardado pendiente: se ve en la lista y se puede reintentar.
+    (c.pendienteSync ? '<div class="sub">⏳ Pendiente de sincronizar</div>' : '') +
     '<div class="actions"><button class="btn-green" data-carta-open="' + esc(c.id) + '">📝 Abrir</button>' +
     '<button class="btn-dark" data-carta-pdf="' + esc(c.id) + '">📄 PDF</button>' +
     '<button class="btn-green" data-carta-wa="' + esc(c.id) + '">📲 PDF por WhatsApp</button>' +
     '<button class="btn-dark" data-carta-mail="' + esc(c.id) + '">✉️ PDF por correo</button>';
+  if (c.pendienteSync) html += '<button class="btn-dark" data-carta-retry="' + esc(c.id) + '">🔄 Reintentar</button>';
   if (cartaPuedeBorrar(c)) html += '<button class="btn-danger" data-carta-del="' + esc(c.id) + '">🗑️ Eliminar</button>';
   return html + '</div></div>';
 }
@@ -6529,7 +6637,7 @@ async function cartaCompartirPdf(c, via) {
 function cartaListClick(e) {
   var t = e.target;
   var q = function (attr) { var el = t.closest('[' + attr + ']'); return el ? el.getAttribute(attr) : null; };
-  var id = q('data-carta-open') || q('data-carta-pdf') || q('data-carta-wa') || q('data-carta-mail') || q('data-carta-del');
+  var id = q('data-carta-open') || q('data-carta-pdf') || q('data-carta-wa') || q('data-carta-mail') || q('data-carta-retry') || q('data-carta-del');
   if (!id) return;
   var c = cartaFind(id);
   if (!c) return;
@@ -6537,6 +6645,8 @@ function cartaListClick(e) {
   if (t.closest('[data-carta-pdf]')) { cartaCompartirPdf(c, 'pdf'); return; }
   if (t.closest('[data-carta-wa]')) { cartaCompartirPdf(c, 'wa'); return; }
   if (t.closest('[data-carta-mail]')) { cartaCompartirPdf(c, 'mail'); return; }
+  // (269) Reintentar la sincronización de un guardado pendiente.
+  if (t.closest('[data-carta-retry]')) { cartaReintentarSync(id); return; }
   if (t.closest('[data-carta-del]')) {
     if (!cartaPuedeBorrar(c)) return;
     showConfirm('¿Eliminar esta carta?').then(function (ok) { if (ok) cartaEliminar(id); });
@@ -6653,11 +6763,15 @@ function refreshMantAccess() {
   var b = mantBloqueado();
   var go = document.getElementById('btnGoMant');
   if (go) go.disabled = b;
-  var tab = document.querySelector('#tabs .tab[data-v="mant"]');
-  if (tab) tab.disabled = b;
+  // (269) La pestaña de Mantenimientos ya no existe (barra superior
+  // solo Inicio y Equipo): el bloqueo se refleja en la tarjeta de
+  // Inicio, que es la única entrada a la sección.
 }
 // Menu de secciones (251): 'inicio' es el selector que se muestra al
 // abrir la app, cada vez, sin recordar la última sección.
+// (269) La barra superior solo tiene Inicio y Equipo: las demás vistas
+// se abren desde las tarjetas grandes de Inicio (o con «Volver a
+// Inicio»); Usuarios desde el botón de la barra de sesión (admin).
 function showVista(v) {
   if (v === 'usuarios' && cloudRole !== 'admin') v = 'inicio';
   if (v === 'mant' && mantBloqueado()) { showToast('El acceso a Mantenimientos está bloqueado por el administrador.'); v = 'inicio'; }
@@ -6678,8 +6792,8 @@ function showVista(v) {
   if (v === 'preparar') prefillTecnico();
   if (v === 'mant') { prefillMantTecnico(); renderMant(); }
   if (v === 'resp') { respCargarWa(); respCargarBorrador(); respSuscribir(); renderRespList(); }
-  if (v === 'acuse') { acusePrefillFecha(); acuseAsignarFolio(); renderAcuseList(); acuseSuscribir(); }
-  if (v === 'carta') { cartaPrefillFecha(); cartaAsignarFolio(); cartaEqRender(); renderCartaList(); cartaSuscribir(); }
+  if (v === 'acuse') { acusePrefillFecha(); acuseAsignarFolio(); renderAcuseList(); acuseSuscribir(); acuseReintentarPendientes(); }
+  if (v === 'carta') { cartaPrefillFecha(); cartaAsignarFolio(); cartaEqRender(); renderCartaList(); cartaSuscribir(); cartaReintentarPendientes(); }
   document.querySelectorAll('#tabs .tab').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-v') === v); });
   window.scrollTo(0, 0);
 }
@@ -6687,6 +6801,9 @@ document.getElementById('tabs').addEventListener('click', function (e) {
   var b = e.target.closest('[data-v]');
   if (b) showVista(b.getAttribute('data-v'));
 });
+// (269) Usuarios (solo admin) se abre desde la barra de sesión, no
+// desde una pestaña.
+document.getElementById('btnUsuarios').addEventListener('click', function () { showVista('usuarios'); });
 // Recibir renta: formulario y lista.
 document.getElementById('fR-rec-tipo').addEventListener('change', function () { updateRentaForm('rec'); });
 document.getElementById('btnR-rec-add').addEventListener('click', function () { saveRenta('rec'); });
@@ -7157,7 +7274,7 @@ document.getElementById('btnEuGuardar').addEventListener('click', function () {
   });
 });
 document.getElementById('btnReportar').addEventListener('click', function () {
-  window.location.href = 'mailto:gerardo.cruzhz@linux.com?subject=' + encodeURIComponent('Reporte de problema - Checklist de Soporte 268') + '&body=' + encodeURIComponent('Describe el problema:\n\n\nVersión de la app: 268');
+  window.location.href = 'mailto:gerardo.cruzhz@linux.com?subject=' + encodeURIComponent('Reporte de problema - Checklist de Soporte 269') + '&body=' + encodeURIComponent('Describe el problema:\n\n\nVersión de la app: 269');
 });
 
 boot();

@@ -5,6 +5,67 @@ del proyecto (memoria 2026-11-12 a 2026-11-17) y las series de tests
 (`tests/test20*.js`). Las versiones 2.0.1–2.0.4 no tienen registro y
 no se documentan con supuestos.
 
+## 2.5.19 — 2026-11-25
+
+- **PDF de la Carta Responsiva: Área y Jefe Directo ya no van
+  juntos.** Antes el PDF ponía «Área: Jefe Directo» en UNA sola
+  celda con los dos valores unidos; ahora son DOS cajas apiladas,
+  cada una con su borde visible y su valor («Área:» y «Jefe
+  Directo:»), como las demás del formato FO-SI-10. El formulario ya
+  tenía los campos por separado; la corrección es solo el layout del
+  PDF (misma función `cajaCampo()`). Todo lo demás igual: cajas con
+  borde, tabla verde #9BBB59, texto legal verbatim, 2 páginas.
+- **Reglas de Firestore PUBLICADAS con la CLI.** `firebase deploy
+  --only firestore:rules` (desde `~/workspace/android/firebase-cli/`,
+  con el shim LD_PRELOAD) terminó con «✔ firestore: released rules
+  firestore.rules to cloud.firestore»: las reglas de `acuses`,
+  `cartas`, `config/foliosCarta` y `config/foliosAcuse` ya están en
+  la consola desde 2.5.19, así que el guardado en nube ya no
+  debería dar `permission denied`. Es lo que causaba el aviso «No
+  se pudo guardar la carta en la nube. Revisa tu conexión.» de la
+  captura.
+- **Aviso de guardado según la causa real (Carta y Acuse).**
+  `mensajeErrorNube()`: `permission-denied` → avisa que faltan las
+  reglas en la consola de Firebase; sin red / `unavailable` → «Sin
+  conexión: se guardó en el teléfono»; cualquier otro error →
+  muestra su código. Nada de mensaje genérico.
+- **Respaldo local con reintento automático.** Cuando la nube falla,
+  la carta/acuse queda guardada EN EL TELÉFONO (mismo folio,
+  `pendienteSync: true` en `localStorage`, nunca viaja a la nube)
+  y aparece en la lista marcada «⏳ Pendiente de sincronizar». La
+  app la reintenta SOLA al abrir la vista y al recuperar conexión
+  (listener `online`), y cada tarjeta pendiente tiene su botón
+  «🔄 Reintentar». El reintento usa `upsert` con el mismo id y
+  folio: el folio no se duplica al sincronizar.
+- **Barra superior sin repetir: solo «Inicio» y «Equipo».** Se
+  eliminaron las pestañas del medio (Por preparar, Recibir renta,
+  Entrega Renta, Mantenimientos y Usuarios). Las 7 tarjetas grandes
+  de Inicio NO se tocan: son la vía para entrar a cada sección.
+  Usuarios (solo admin) se abre ahora desde el botón
+  «👥 Usuarios» de la barra de sesión; la vista y su lógica no
+  cambiaron. La navegación se verificó en todas las vistas
+  (tarjetas, «Volver a Inicio» y pestaña Equipo). El asunto del
+  correo «Reporte de problema» ahora dice Serie 269.
+- Tests `tests/test20269.js`: **968 true / 0 false** (serie 269;
+  nuevas 269A–269G: versión y bundle sin cambio, aviso según la
+  causa, respaldo local pendiente, reintento sin duplicar folio,
+  reintento automático al abrir la vista, barra solo Inicio/Equipo).
+  Bundle de Firebase SIN cambio (firebase.js intacto), md5
+  `9d4f0a81f3108d0f92f50f08fc48c752`; `www/index.html` md5
+  `97917c56481ed4a7d913505195a5ac0a`. APK versionCode 73,
+  15,812,461 B, md5 `61be26f415ae4cdefe03e88324cfd972` (firma
+  permanente, apksigner: v2, 1 firmante). Escritorio 2.5.19:
+  AppImage 123,363,092 B md5 `664ec5573f74f1acb5737d4ac7976254`;
+  .deb 97,156,812 B md5 `e35981cc3649cdf52ac7ba66df752175`; .rpm
+  86,220,697 B md5 `8e082ca0cc836929ff84eb4deb6755b3`; Windows
+  portable .exe 99,175,886 B md5
+  `b62f177679407a72730cd2025240103f` y su ZIP 99,168,580 B md5
+  `6d683fbd1513e0e86fd461a6ec3ca733`; app.asar md5
+  `3cb435c866099427189cd331654a2c8b`, modo 644 en los tres
+  paquetes Linux. Humo `scripts/smoke-269-formatos.js`:
+  VEREDICTO OK (también como usuario `nobody` sobre el AppImage
+  extraído, viva 30 s sin errores de acceso a app.asar).
+
 ## 2.5.18 — 2026-11-25
 
 - **PDF de la Carta Responsiva: campos del solicitante ahora con
