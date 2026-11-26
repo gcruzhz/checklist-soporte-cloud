@@ -543,19 +543,24 @@ async function archivarResponsiva(id, archivado) {
     : { archivado: false, archivadoEn: null });
 }
 
-// Acuses de Sistemas (2.5.16): acuse de recibido de documentos, sin
-// folio y sin página pública. El documento lleva creadoPor,
-// creadoPorNombre, creadoEn y datos {fecha, para, de, anexo}.
-// uidOpcional filtra por creadoPor (lo usan los usuarios normales para
-// que las reglas permitan la lectura); sin él el admin suscribe todo.
-async function crearAcuse(datos, creadoPorNombre) {
+// Acuses de Sistemas (2.5.16; folio desde 2.5.18): acuse de recibido
+// de documentos, con folio de 5 dígitos asignado AL ABRIR el
+// formulario (la app lo pasa ya asignado; si no viene, crearAcuse lo
+// asigna con asignarFolioAcuse). Sin página pública. El documento
+// lleva creadoPor, creadoPorNombre, creadoEn, folio y datos {fecha,
+// para, de, anexo}. uidOpcional filtra por creadoPor (lo usan los
+// usuarios normales para que las reglas permitan la lectura); sin él
+// el admin suscribe todo.
+async function crearAcuse(datos, creadoPorNombre, folio) {
   const u = auth.currentUser;
   if (!u) throw new Error('no-auth');
+  const f = folio || (await asignarFolioAcuse());
   const ref = doc(collection(db, 'acuses'));
   await setDoc(ref, {
     creadoPor: u.uid,
     creadoPorNombre: creadoPorNombre || u.email || '',
     creadoEn: Date.now(),
+    folio: f,
     datos: datos || {}
   });
   return ref.id;
@@ -603,25 +608,42 @@ async function asignarFolioCarta() {
   });
 }
 
-// Cartas Responsivas FO-SI-10 (2.5.16): resguardo y uso de equipo de
-// cómputo. El folio se asigna al guardar (crearCarta lo pide con
-// asignarFolioCarta); el documento lleva creadoPor, creadoPorNombre,
-// creadoEn, folio y datos {fecha, nombre, colaborador, sucursal,
-// puesto, jefe, ip, observaciones, equipos: [{modelo, marca, serie,
-// concepto}]}. Sin página pública: solo el técnico y el admin.
-async function crearCarta(datos, creadoPorNombre) {
+// Folio del acuse de Sistemas (2.5.18): config/foliosAcuse.siguiente
+// empieza en 1; la transacción lee, asigna el folio con 5 dígitos y
+// sube el contador, así dos teléfonos no repiten folio. Secuencia
+// INDEPENDIENTE de la de cartas (config/foliosCarta). Espejo de
+// asignarFolioCarta().
+async function asignarFolioAcuse() {
+  const ref = doc(db, 'config', 'foliosAcuse');
+  return runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    const n = (snap.exists() && typeof snap.data().siguiente === 'number') ? snap.data().siguiente : 1;
+    tx.set(ref, { siguiente: n + 1 });
+    return String(n).padStart(5, '0');
+  });
+}
+
+// Cartas Responsivas FO-SI-10 (2.5.16; folio al abrir desde 2.5.18):
+// resguardo y uso de equipo de cómputo. El folio se asigna AL ABRIR
+// el formulario (la app lo pasa ya asignado; si no viene, crearCarta
+// lo pide con asignarFolioCarta como antes); el documento lleva
+// creadoPor, creadoPorNombre, creadoEn, folio y datos {fecha, nombre,
+// colaborador, sucursal, puesto, jefe, ip, observaciones, equipos:
+// [{modelo, marca, serie, concepto}]}. Sin página pública: solo el
+// técnico y el admin.
+async function crearCarta(datos, creadoPorNombre, folio) {
   const u = auth.currentUser;
   if (!u) throw new Error('no-auth');
-  const folio = await asignarFolioCarta();
+  const f = folio || (await asignarFolioCarta());
   const ref = doc(collection(db, 'cartas'));
   await setDoc(ref, {
     creadoPor: u.uid,
     creadoPorNombre: creadoPorNombre || u.email || '',
     creadoEn: Date.now(),
-    folio: folio,
+    folio: f,
     datos: datos || {}
   });
-  return { id: ref.id, folio: folio };
+  return { id: ref.id, folio: f };
 }
 
 function subscribeCartas(cb, uidOpcional) {
@@ -839,6 +861,7 @@ window.Cloud = {
   deleteAcuse,
   getAcuse,
   asignarFolioCarta,
+  asignarFolioAcuse,
   crearCarta,
   subscribeCartas,
   upsertCarta,

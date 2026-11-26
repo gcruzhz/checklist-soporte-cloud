@@ -180,7 +180,7 @@
     <img class="login-logo" src="lab-icon.png" alt="Checklist de Soporte">
     <h1>Checklist de Soporte</h1>
     <p class="login-sub">Ingresa con tu usuario para ver y registrar equipos.</p>
-    <p class="login-sub" style="font-size:11px;color:#999">Versión 2.5.17</p>
+    <p class="login-sub" style="font-size:11px;color:#999">Versión 2.5.18</p>
     <div id="loginBox">
       <form id="loginForm">
         <div class="field"><label>Usuario o correo</label><input id="loginEmail" type="text" placeholder="usuario o tu@correo.com" autocomplete="username"></div>
@@ -421,7 +421,7 @@
   <div class="card">
     <b>Acerca de</b>
     <div class="line">App: Checklist de Soporte</div>
-    <div class="line">Versión: 2.5.17</div>
+    <div class="line">Versión: 2.5.18</div>
     <div class="line" id="focusDiag">Foco: — · Elemento activo: —</div>
     <div class="line">Contacto: <a href="mailto:gerardo.cruzhz@linux.com">gerardo.cruzhz@linux.com</a></div>
     <div class="sub">© Gerardo Cruz Hernandez</div>
@@ -613,6 +613,7 @@
     </div>
     <div class="panel" id="acuseFormBox">
       <div class="field"><label>Fecha *</label><input id="fAc-fecha" type="date"></div>
+      <div class="field"><label>Folio</label><input id="fAc-folio" readonly placeholder="Se asigna al abrir"></div>
       <div class="field"><label>Para *</label><input id="fAc-para" placeholder="Nombre y área de quien recibe"></div>
       <div class="field"><label>De *</label><input id="fAc-de" placeholder="SISTEMAS"></div>
       <div class="field"><label>Anexo</label><input id="fAc-anexo" placeholder="Documentación anexa (opcional)"></div>
@@ -631,11 +632,11 @@
   <div id="viewCarta" hidden>
     <div class="card">
       <b>Carta Responsiva</b>
-      <div class="share-note">Carta responsiva para resguardo y uso de equipo de cómputo (FO-SI-10). El folio se asigna al guardar; el PDF reproduce el formato original en 2 páginas.</div>
+      <div class="share-note">Carta responsiva para resguardo y uso de equipo de cómputo (FO-SI-10). El folio se asigna al abrir el formulario; el PDF reproduce el formato original en 2 páginas.</div>
     </div>
     <div class="panel" id="cartaFormBox">
       <div class="field"><label>Fecha de solicitud *</label><input id="fCa-fecha" type="date"></div>
-      <div class="field"><label>Folio</label><input id="fCa-folio" readonly placeholder="Se asigna al guardar"></div>
+      <div class="field"><label>Folio</label><input id="fCa-folio" readonly placeholder="Se asigna al abrir"></div>
       <div class="field"><label>Nombre del colaborador *</label><input id="fCa-nombre" placeholder="Nombre completo del colaborador"></div>
       <div class="field"><label>Número de colaborador</label><input id="fCa-colaborador" placeholder="Número de colaborador"></div>
       <div class="field"><label>Sucursal</label><input id="fCa-sucursal" placeholder="Sucursal"></div>
@@ -5336,6 +5337,8 @@ async function shareMantCopy(m) {
 // etiqueta en gris y la celda blanca vacía para escribir a mano.
 // Medidas del original (docx + captura): márgenes izq 57 pt / der 38 pt,
 // logo 111x65 pt, caja del título 235x30 pt, línea naranja 2.5 pt.
+// (268) Folio arriba a la derecha, junto a la fecha (asignado al abrir
+// el formulario; ver acuseAsignarFolio).
 function buildPdfAcuse(a) {
   var d = (a && a.datos) || {};
   var W = 612, H = 792, USABLE = H - 14;
@@ -5368,6 +5371,9 @@ function buildPdfAcuse(a) {
   LN(ML, 102, 552, 102, 2.5, ORANGE);
   // Fecha arriba, a la derecha, en español largo.
   T(fmtFechaLarga(d.fecha), X1, 118, 'F1', 11, null, 'R');
+  // (268) Folio arriba a la derecha, junto a la fecha.
+  var folioAc = (a && a.folio) || (d && d.folio) || '';
+  if (folioAc) T('FOLIO: ' + folioAc, X1, 136, 'F2', 11, null, 'R');
   // PARA / DE / ANEXO: etiquetas a la izquierda, valores desde x=170.
   yt = 171;
   function filaAcuse(label, value, labelFont, labelSize, valueFont, valueSize, underline) {
@@ -5418,13 +5424,17 @@ var CARTA_RESPONSABILIDADES = [
   'Acepto que en caso de detectarse mal uso y/o daños al equipo que tengo bajo mi resguardo seré considerado como responsable. Por lo anterior, es imprescindible que, salvo autorizaciones específicas, se evite la utilización de equipamiento por parte de personal no autorizado, ajeno al área solicitante y/o a LAPI S.A. de C.V.',
   'Finalmente, acepto y reconozco que, una vez concluida mi relación laboral con LAPI, tengo la obligación de entregar el equipo bajo mi resguardo, así como la información contenida en el mismo y sus accesorios, en caso contrario, me hago sabedor de la responsabilidad civil por los daños y perjuicios que cause por mi omisión, así como de las acciones penales que puedan derivar por los delitos que ello conlleve.'
 ];
-// (267) PDF de la Carta Responsiva (2 páginas carta): p1 con el
+// (268) PDF de la Carta Responsiva (2 páginas carta): p1 con el
 // encabezado fijo del formato (logo Lapi como imagen — el mismo asset
 // que el Acuse —, título y tabla Código FO-SI-10, Versión 3, Fecha de
 // actualización 25-sep-23, Página 1 de 2, con bordes y negritas),
-// Datos del solicitante (con Área), tabla Exclusivo de Sistemas con
-// encabezado VERDE #9BBB59 y Nombre y firma del usuario; p2 con las
-// responsabilidades verbatim y la firma final.
+// Seguridad/Fecha/FOLIO en una línea, DATOS DEL SOLICITANTE con cada
+// campo en su CELDA CON BORDE como el original (izq.: Nombre, Número,
+// Sucursal, Puesto; der.: Ip de Red y «Área: Jefe Directo:»;
+// Observaciones en caja larga), tabla Exclusivo de Sistemas con
+// encabezado VERDE #9BBB59 y divisores verticales, y Nombre y firma
+// del usuario; p2 con las responsabilidades verbatim y la firma final.
+// El folio ya viene asignado al abrir el formulario (no al guardar).
 function buildPdfCarta(c) {
   var d = (c && c.datos) || {};
   var equipos = Array.isArray(d.equipos) ? d.equipos : [];
@@ -5447,12 +5457,6 @@ function buildPdfCarta(c) {
     return wrapText(pdfSafe(str), Math.max(10, Math.floor(w / ((s || 9) * 0.5))));
   }
   function val(v) { return (v == null || v === '') ? '-' : String(v); }
-  function campo(label, value, x, ytop, w) {
-    T(label, x, ytop, 'F2', 9);
-    var lw = label.length * 5.4 + 4;
-    var lines = wrapLines(val(value), w - lw, 9);
-    lines.forEach(function (ln, i) { T(ln, x + lw, ytop + i * 11, 'F1', 9); });
-  }
   // --- Página 1: encabezado fijo del formato.
   need(66);
   var y0 = yt;
@@ -5479,46 +5483,54 @@ function buildPdfCarta(c) {
   T('Página:', codX0 + 5, codTops[3] + 3, 'F2', 8);
   T('1 de 2', (codX1 + codX2) / 2, codTops[3] + 3, 'F2', 8, null, 'C');
   yt += 66 + 6;
-  // Seguridad de la Información + fecha de solicitud + folio.
-  need(32);
+  // Seguridad de la Información + fecha de solicitud + folio (268):
+  // en UNA línea como el original (izquierda / centro / derecha).
+  need(14);
   y0 = yt;
   T('Seguridad de la Información', 36, y0, 'F2', 10);
-  T('Fecha de solicitud: ' + fmtFechaLarga(d.fecha), 36, y0 + 14, 'F1', 9);
-  T('FOLIO: ' + (c.folio || '-'), 420, y0 + 14, 'F2', 10);
-  yt += 32 + 6;
-  // Datos del solicitante.
-  need(16);
-  T('DATOS DEL SOLICITANTE', 36, yt, 'F2', 10);
+  T('Fecha de solicitud: ' + fmtFechaLarga(d.fecha), 315, y0, 'F1', 9, null, 'C');
+  T('FOLIO: ' + (c.folio || '-'), 460, y0, 'F2', 10);
+  yt += 14 + 8;
+  // Datos del solicitante (268): como el formato original FO-SI-10 —
+  // cada campo en su CELDA CON BORDE VISIBLE. Columna izquierda (4
+  // cajas apiladas): Nombre, Número, Sucursal, Puesto; columna derecha:
+  // Ip de Red (ocupa las 2 primeras filas) y «Área: Jefe Directo:»
+  // (última fila; un solo campo del original que junta los dos valores
+  // del formulario, Área y Jefe Directo). Observaciones como caja larga
+  // de ancho completo con borde. Medidas de la captura del original:
+  // etiquetas en negrita a la derecha de su caja, cajas izq. x=146
+  // w=184, der. x=410 w=166, filas de 22 pt.
+  need(16 + 88 + 4 + 12 + 22 + 6);
+  T('DATOS DEL SOLICITANTE', 306, yt, 'F2', 10, null, 'C');
   yt += 16;
-  var filas = [
-    [['Nombre del colaborador:', d.nombre, 540]],
-    [['Número de colaborador:', d.colaborador, 264], ['Ip de Red:', d.ip, 264]],
-    [['Sucursal:', d.sucursal, 264], ['Puesto:', d.puesto, 264]],
-    [['Área:', d.area, 264], ['Jefe Directo:', d.jefe, 264]]
-  ];
-  filas.forEach(function (fila) {
-    var hMax = 11;
-    fila.forEach(function (cc) {
-      var lines = wrapLines(val(cc[1]), cc[2] - (cc[0].length * 5.4 + 4), 9);
-      hMax = Math.max(hMax, lines.length * 11);
-    });
-    need(hMax + 3);
-    var xx = 36;
-    fila.forEach(function (cc) {
-      campo(cc[0], cc[1], xx, yt, cc[2]);
-      xx += cc[2] + 12;
-    });
-    yt += hMax + 3;
-  });
-  // Observaciones.
-  var obsLines = wrapLines('Observaciones: ' + val(d.observaciones), 528, 9);
-  var hObs = Math.max(11, obsLines.length * 11);
-  need(hObs + 3);
-  obsLines.forEach(function (ln, i) { T(ln, 36, yt + i * 11, 'F1', 9); });
-  yt += hObs + 6;
+  var DAT_Y = yt;
+  var DAT_RH = 22;
+  function cajaCampo(etiqueta, valor, etiqDer, cajaX, cajaY, cajaW, cajaH) {
+    // Etiqueta en negrita, alineada a la derecha, pegada a su caja.
+    T(etiqueta, etiqDer, cajaY + (cajaH - 11) / 2 + 1, 'F2', 9, null, 'R');
+    R(cajaX, cajaY, cajaW, cajaH, null);
+    var lines = wrapLines(val(valor), cajaW - 10, 9).slice(0, 2);
+    var yTxt = cajaY + (cajaH - lines.length * 11) / 2 + 1;
+    if (yTxt < cajaY + 1) yTxt = cajaY + 1;
+    lines.forEach(function (ln, i) { T(ln, cajaX + 5, yTxt + i * 11, 'F1', 9); });
+  }
+  cajaCampo('Nombre del colaborador:', d.nombre, 140, 146, DAT_Y, 184, DAT_RH);
+  cajaCampo('Número de colaborador:', d.colaborador, 140, 146, DAT_Y + DAT_RH, 184, DAT_RH);
+  cajaCampo('Sucursal:', d.sucursal, 140, 146, DAT_Y + 2 * DAT_RH, 184, DAT_RH);
+  cajaCampo('Puesto:', d.puesto, 140, 146, DAT_Y + 3 * DAT_RH, 184, DAT_RH);
+  cajaCampo('Ip de Red:', d.ip, 404, 410, DAT_Y, 166, 2 * DAT_RH);
+  var jefeVal = [d.area, d.jefe].filter(function (s) { return s; }).join(' — ');
+  cajaCampo('Área: Jefe Directo:', jefeVal, 404, 410, DAT_Y + 3 * DAT_RH, 166, DAT_RH);
+  yt = DAT_Y + 4 * DAT_RH + 4;
+  // Observaciones: etiqueta arriba, caja larga de ancho completo.
+  T('Observaciones:', 82, yt, 'F2', 9);
+  R(36, yt + 12, 540, 22, null);
+  var obsLines = wrapLines(val(d.observaciones), 530, 9).slice(0, 2);
+  obsLines.forEach(function (ln, i) { T(ln, 41, yt + 12 + 6 + i * 11, 'F1', 9); });
+  yt += 12 + 22 + 6;
   // Exclusivo de Sistemas: tabla de equipos.
   need(16);
-  T('Exclusivo de Sistemas', 36, yt, 'F2', 10);
+  T('Exclusivo de Sistemas', 306, yt, 'F2', 10, null, 'C');
   yt += 16;
   // Anchos del original (docx): Modelo 21.6%, Marca 21.6%,
   // Número de serie 28.4%, Concepto 28.4% de 540 pt.
@@ -5529,12 +5541,20 @@ function buildPdfCarta(c) {
   y0 = yt;
   // (267) Encabezado VERDE #9BBB59 del original (antes gris 0.88).
   R(36, y0, 540, 16, [0.608, 0.733, 0.349]);
+  // (268) Divisores verticales entre columnas, como el original
+  // (el docx tiene insideV en esta tabla).
+  LN(153, y0, 153, y0 + 16);
+  LN(270, y0, 270, y0 + 16);
+  LN(423, y0, 423, y0 + 16);
   cols.forEach(function (cc) { T(cc[0], cc[1] + 4, y0 + 3, 'F2', 8); });
   yt += 16;
   equipos.forEach(function (eq) {
     need(16);
     y0 = yt;
     R(36, y0, 540, 16, null);
+    LN(153, y0, 153, y0 + 16);
+    LN(270, y0, 270, y0 + 16);
+    LN(423, y0, 423, y0 + 16);
     T(String(eq.modelo || '-').slice(0, 24), 40, y0 + 3, 'F1', 8);
     T(String(eq.marca || '-').slice(0, 22), 157, y0 + 3, 'F1', 8);
     T(String(eq.serie || '-').slice(0, 30), 274, y0 + 3, 'F1', 8);
@@ -6059,20 +6079,24 @@ document.getElementById('btnRespVerAnt').addEventListener('click', function () {
 document.getElementById('btnRespGuardar').addEventListener('click', function () { respGuardarYCerrar(); });
 document.getElementById('btnRespLimpiar').addEventListener('click', function () { respLimpiar(); });
 respCargarWa();
-// (266) Acuse Sistemas y Carta Responsiva FO-SI-10: dos formularios
+// (268) Acuse Sistemas y Carta Responsiva FO-SI-10: dos formularios
 // con PDF que reproducen los formatos originales. Sin nube (modo
 // local) los guardados van a localStorage; con nube van a Firestore
 // (colecciones 'acuses' y 'cartas') y la lista llega por suscripción,
 // igual que Responsivas (cada técnico ve los suyos, el admin todos).
-// El folio de la Carta se asigna al guardar (nube: transacción
-// asignarFolioCarta vía crearCarta; local: contador en localStorage).
-// El Acuse no lleva folio. Al guardar, el formulario queda con los
-// datos y el folio (carta) para generar el PDF enseguida; Limpiar lo
-// vacía para el siguiente. Tocar un guardado lo carga en el formulario
-// para reimprimir o compartir; Eliminar es admin o dueño.
+// El FOLIO se asigna AL ABRIR el formulario (nube: transacción
+// asignarFolioAcuse / asignarFolioCarta; local: contador en
+// localStorage; secuencias INDEPENDIENTES, config/foliosAcuse y
+// config/foliosCarta). Si se abandona sin guardar, el folio queda
+// consumido (hueco en la numeración, no se devuelve). Al guardar, el
+// formulario queda con los datos y el folio para generar el PDF
+// enseguida; Limpiar lo vacía y asigna el folio del siguiente.
+// Tocar un guardado lo carga en el formulario para reimprimir o
+// compartir; Eliminar es admin o dueño.
 var ACUSE_LS_KEY = 'checklist-soporte-acuses-v1';
 var CARTA_LS_KEY = 'checklist-soporte-cartas-v1';
 var CARTA_FOLIO_LOCAL_KEY = 'checklist-soporte-folios-carta-local-v1';
+var ACUSE_FOLIO_LOCAL_KEY = 'checklist-soporte-folios-acuse-local-v1';
 var acuses = [];
 var cartas = [];
 var cloudAcuseUnsub = null;
@@ -6157,49 +6181,59 @@ function acuseValidar(d) {
   return ok;
 }
 function acuseLimpiarForm() {
-  ['fAc-para', 'fAc-de', 'fAc-anexo'].forEach(function (id) {
+  ['fAc-folio', 'fAc-para', 'fAc-de', 'fAc-anexo'].forEach(function (id) {
     var el = document.getElementById(id);
     if (el) { el.value = ''; el.classList.remove('campo-falta'); }
   });
   acuseEditId = null;
   acusePrefillFecha();
+  acuseAsignarFolio();
 }
 function acuseCargarEnForm(a) {
   var d = (a && a.datos) || {};
   function set(id, val) { var el = document.getElementById(id); if (el) el.value = val || ''; }
   set('fAc-fecha', d.fecha || hoyISO());
+  set('fAc-folio', a.folio || '');
   set('fAc-para', d.para);
   set('fAc-de', d.de);
   set('fAc-anexo', d.anexo);
   acuseEditId = a.id;
+  if (!a.folio) acuseAsignarFolio();
 }
 function acuseFind(id) { var f = null; acuses.forEach(function (x) { if (x.id === id) f = x; }); return f; }
 async function acuseGuardar() {
   var d = acuseLeerForm();
   if (!acuseValidar(d)) { showToast('Faltan datos obligatorios: Para y De.'); return false; }
+  // (268) El folio ya viene del formulario (asignado al abrir); si
+  // está vacío se asigna ahora como respaldo, nunca al revés.
+  var folioEl = document.getElementById('fAc-folio');
+  var folio = (folioEl && folioEl.value) || '';
+  if (!folio) folio = await acuseAsignarFolio();
   var a = null;
   if (acuseEditId) acuses.forEach(function (x) { if (x.id === acuseEditId) a = x; });
   if (!a) {
     if (CLOUD_ENABLED && cloudUser && window.Cloud && window.Cloud.crearAcuse) {
       try {
-        var newId = await window.Cloud.crearAcuse(d, technicianName());
-        a = { id: newId, creadoEn: Date.now(), creadoPor: cloudUser.uid, creadoPorNombre: technicianName(), datos: d };
+        var newId = await window.Cloud.crearAcuse(d, technicianName(), folio);
+        a = { id: newId, folio: folio, creadoEn: Date.now(), creadoPor: cloudUser.uid, creadoPorNombre: technicianName(), datos: d };
         acuses.push(a);
       } catch (e) { showToast('No se pudo guardar el acuse en la nube. Revisa tu conexión.'); return false; }
     } else {
-      a = { id: uid(), creadoEn: Date.now(), creadoPor: (cloudUser && cloudUser.uid) || '', creadoPorNombre: technicianName(), datos: d };
+      a = { id: uid(), folio: folio, creadoEn: Date.now(), creadoPor: (cloudUser && cloudUser.uid) || '', creadoPorNombre: technicianName(), datos: d };
       acuses.push(a);
     }
   } else {
     a.datos = d;
+    if (!a.folio && folio) a.folio = folio;
     if (CLOUD_ENABLED && cloudUser && window.Cloud && window.Cloud.upsertAcuse) {
       try { await window.Cloud.upsertAcuse(a); } catch (e) { showToast('No se pudo guardar el acuse en la nube. Revisa tu conexión.'); return false; }
     }
   }
+  if (folioEl) folioEl.value = a.folio || '';
   saveAcuseLocal();
   acuseEditId = a.id;
   renderAcuseList();
-  showToast('Acuse guardado.');
+  showToast('Acuse guardado con folio ' + (a.folio || '—') + '.');
   return true;
 }
 function acusePuedeBorrar(a) {
@@ -6208,7 +6242,7 @@ function acusePuedeBorrar(a) {
 }
 function acuseCardHtml(a) {
   var d = a.datos || {};
-  var html = '<div class="card"><b>Acuse · ' + esc(fmtFechaLarga(d.fecha)) + '</b>' +
+  var html = '<div class="card"><b>Acuse · Folio ' + esc(a.folio || '—') + ' · ' + esc(fmtFechaLarga(d.fecha)) + '</b>' +
     '<div class="sub">Para: ' + esc(d.para || '—') + ' · De: ' + esc(d.de || '—') + '</div>';
   if (d.anexo) html += '<div class="sub">Anexo: ' + esc(d.anexo) + '</div>';
   html += '<div class="sub">Creado por ' + esc(a.creadoPorNombre || '—') + (a.creadoEn ? ' · ' + fmtDate(a.creadoEn) : '') + '</div>';
@@ -6237,13 +6271,14 @@ function acuseEliminar(id) {
 }
 function acuseTexto(a) {
   var d = (a && a.datos) || {};
-  return 'Acuse Sistemas — Checklist de Soporte. Para: ' + (d.para || '—') + ', De: ' + (d.de || '—') + (d.anexo ? ', Anexo: ' + d.anexo : '') + '.';
+  return 'Acuse Sistemas — Checklist de Soporte. Folio ' + (a.folio || '—') + '. Para: ' + (d.para || '—') + ', De: ' + (d.de || '—') + (d.anexo ? ', Anexo: ' + d.anexo : '') + '.';
 }
 function acusePdfDesdeForm() {
   var d = acuseLeerForm();
   if (!acuseValidar(d)) { showToast('Faltan datos obligatorios: Para y De.'); return; }
   var a = acuseEditId ? acuseFind(acuseEditId) : null;
-  acuseCompartirPdf({ id: (a && a.id) || 'borrador', datos: d }, 'pdf');
+  var folioEl = document.getElementById('fAc-folio');
+  acuseCompartirPdf({ id: (a && a.id) || 'borrador', folio: (a && a.folio) || (folioEl && folioEl.value) || '', datos: d }, 'pdf');
 }
 async function acuseCompartirPdf(a, via) {
   var out = acusePdfBlob(a);
@@ -6333,6 +6368,46 @@ function cartaFolioLocal() {
   } catch (e) {}
   return String(n).padStart(5, '0');
 }
+// Folio local del Acuse (sin nube): mismo patrón, secuencia
+// INDEPENDIENTE de la de cartas.
+function acuseFolioLocal() {
+  var n = 1;
+  try {
+    var raw = localStorage.getItem(ACUSE_FOLIO_LOCAL_KEY);
+    if (raw) { var p = parseInt(raw, 10); if (!isNaN(p) && p >= 1) n = p; }
+    localStorage.setItem(ACUSE_FOLIO_LOCAL_KEY, String(n + 1));
+  } catch (e) {}
+  return String(n).padStart(5, '0');
+}
+// (268) Folio AL ABRIR el formulario: si el campo está vacío se
+// asigna uno y se muestra. Nube: transacción (asignarFolioAcuse /
+// asignarFolioCarta); sin nube, o si la transacción falla: contador
+// local. Si se abandona el formulario sin guardar, el folio queda
+// consumido (hueco en la numeración): es lo normal en folios, no se
+// devuelve. No reasigna si el campo ya tiene folio (p. ej. al volver
+// a la vista con el formulario a medias o con un guardado cargado).
+async function acuseAsignarFolio() {
+  var el = document.getElementById('fAc-folio');
+  if (!el || el.value) return el ? el.value : '';
+  var folio = '';
+  if (CLOUD_ENABLED && cloudUser && window.Cloud && window.Cloud.asignarFolioAcuse) {
+    try { folio = await window.Cloud.asignarFolioAcuse(); } catch (e) { folio = ''; }
+  }
+  if (!folio) folio = acuseFolioLocal();
+  if (el) el.value = folio;
+  return folio;
+}
+async function cartaAsignarFolio() {
+  var el = document.getElementById('fCa-folio');
+  if (!el || el.value) return el ? el.value : '';
+  var folio = '';
+  if (CLOUD_ENABLED && cloudUser && window.Cloud && window.Cloud.asignarFolioCarta) {
+    try { folio = await window.Cloud.asignarFolioCarta(); } catch (e) { folio = ''; }
+  }
+  if (!folio) folio = cartaFolioLocal();
+  if (el) el.value = folio;
+  return folio;
+}
 function cartaLimpiarForm() {
   ['fCa-nombre', 'fCa-colaborador', 'fCa-sucursal', 'fCa-puesto', 'fCa-area', 'fCa-jefe', 'fCa-ip', 'fCa-observaciones'].forEach(function (id) {
     var el = document.getElementById(id);
@@ -6344,12 +6419,14 @@ function cartaLimpiarForm() {
   cartaEqFilas = [cartaEqFilaVacia()];
   cartaEqRender();
   cartaPrefillFecha();
+  cartaAsignarFolio();
 }
 function cartaCargarEnForm(c) {
   var d = (c && c.datos) || {};
   function set(id, val) { var el = document.getElementById(id); if (el) el.value = val || ''; }
   set('fCa-fecha', d.fecha || hoyISO());
   set('fCa-folio', c.folio || '');
+  if (!c.folio) cartaAsignarFolio();
   set('fCa-nombre', d.nombre);
   set('fCa-colaborador', d.colaborador);
   set('fCa-sucursal', d.sucursal);
@@ -6368,21 +6445,27 @@ function cartaFind(id) { var f = null; cartas.forEach(function (x) { if (x.id ==
 async function cartaGuardar() {
   var d = cartaLeerForm();
   if (!cartaValidar(d)) { showToast('Faltan datos obligatorios: nombre del colaborador y al menos un equipo con modelo o número de serie.'); return false; }
+  // (268) El folio ya viene del formulario (asignado al abrir); si
+  // está vacío se asigna ahora como respaldo, nunca al revés.
+  var folioEl = document.getElementById('fCa-folio');
+  var folio = (folioEl && folioEl.value) || '';
+  if (!folio) folio = await cartaAsignarFolio();
   var c = null;
   if (cartaEditId) cartas.forEach(function (x) { if (x.id === cartaEditId) c = x; });
   if (!c) {
     if (CLOUD_ENABLED && cloudUser && window.Cloud && window.Cloud.crearCarta) {
       try {
-        var created = await window.Cloud.crearCarta(d, technicianName());
+        var created = await window.Cloud.crearCarta(d, technicianName(), folio);
         c = { id: created.id, folio: created.folio, creadoEn: Date.now(), creadoPor: cloudUser.uid, creadoPorNombre: technicianName(), datos: d };
         cartas.push(c);
       } catch (e) { showToast('No se pudo guardar la carta en la nube. Revisa tu conexión.'); return false; }
     } else {
-      c = { id: uid(), folio: cartaFolioLocal(), creadoEn: Date.now(), creadoPor: (cloudUser && cloudUser.uid) || '', creadoPorNombre: technicianName(), datos: d };
+      c = { id: uid(), folio: folio, creadoEn: Date.now(), creadoPor: (cloudUser && cloudUser.uid) || '', creadoPorNombre: technicianName(), datos: d };
       cartas.push(c);
     }
   } else {
     c.datos = d;
+    if (!c.folio && folio) c.folio = folio;
     if (CLOUD_ENABLED && cloudUser && window.Cloud && window.Cloud.upsertCarta) {
       try { await window.Cloud.upsertCarta(c); } catch (e) { showToast('No se pudo guardar la carta en la nube. Revisa tu conexión.'); return false; }
     }
@@ -6436,7 +6519,8 @@ function cartaPdfDesdeForm() {
   var d = cartaLeerForm();
   if (!cartaValidar(d)) { showToast('Faltan datos obligatorios: nombre del colaborador y al menos un equipo con modelo o número de serie.'); return; }
   var c = cartaEditId ? cartaFind(cartaEditId) : null;
-  cartaCompartirPdf({ id: (c && c.id) || 'borrador', folio: (c && c.folio) || '', datos: d }, 'pdf');
+  var folioEl = document.getElementById('fCa-folio');
+  cartaCompartirPdf({ id: (c && c.id) || 'borrador', folio: (c && c.folio) || (folioEl && folioEl.value) || '', datos: d }, 'pdf');
 }
 async function cartaCompartirPdf(c, via) {
   var out = cartaPdfBlob(c);
@@ -6594,8 +6678,8 @@ function showVista(v) {
   if (v === 'preparar') prefillTecnico();
   if (v === 'mant') { prefillMantTecnico(); renderMant(); }
   if (v === 'resp') { respCargarWa(); respCargarBorrador(); respSuscribir(); renderRespList(); }
-  if (v === 'acuse') { acusePrefillFecha(); renderAcuseList(); acuseSuscribir(); }
-  if (v === 'carta') { cartaPrefillFecha(); cartaEqRender(); renderCartaList(); cartaSuscribir(); }
+  if (v === 'acuse') { acusePrefillFecha(); acuseAsignarFolio(); renderAcuseList(); acuseSuscribir(); }
+  if (v === 'carta') { cartaPrefillFecha(); cartaAsignarFolio(); cartaEqRender(); renderCartaList(); cartaSuscribir(); }
   document.querySelectorAll('#tabs .tab').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-v') === v); });
   window.scrollTo(0, 0);
 }
@@ -7073,7 +7157,7 @@ document.getElementById('btnEuGuardar').addEventListener('click', function () {
   });
 });
 document.getElementById('btnReportar').addEventListener('click', function () {
-  window.location.href = 'mailto:gerardo.cruzhz@linux.com?subject=' + encodeURIComponent('Reporte de problema - Checklist de Soporte 267') + '&body=' + encodeURIComponent('Describe el problema:\n\n\nVersión de la app: 267');
+  window.location.href = 'mailto:gerardo.cruzhz@linux.com?subject=' + encodeURIComponent('Reporte de problema - Checklist de Soporte 268') + '&body=' + encodeURIComponent('Describe el problema:\n\n\nVersión de la app: 268');
 });
 
 boot();

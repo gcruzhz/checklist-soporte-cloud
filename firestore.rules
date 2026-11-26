@@ -219,5 +219,18 @@ service cloud.firestore {
         && request.resource.data.siguiente == resource.data.siguiente + 1;
       allow delete: if false;
     }
+
+    // Folios de acuses de Sistemas (2.5.18): config/foliosAcuse.siguiente
+    // es el próximo folio a asignar (empieza en 1). Espejo de
+    // config/foliosCarta: leer activos; crear con siguiente entero;
+    // actualizar solo subir el contador de uno en uno.
+    match /config/foliosAcuse {
+      allow read: if isActive();
+      allow create: if isActive() && request.resource.data.siguiente is int;
+      allow update: if isActive()
+        && request.resource.data.diff(resource.data).changedKeys().hasOnly(['siguiente'])
+        && request.resource.data.siguiente == resource.data.siguiente + 1;
+      allow delete: if false;
+    }
   }
 }

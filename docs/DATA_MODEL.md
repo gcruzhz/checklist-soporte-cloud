@@ -256,6 +256,24 @@ nunca se actualiza ni se borra (reglas).
 Las reglas solo permiten subirlo de uno en uno y solo cambiar ese
 campo.
 
+## `config/foliosCarta` y `config/foliosAcuse` — contadores de folios de Carta y Acuse (2.5.18)
+
+| Campo | Tipo / valor |
+|---|---|
+| `siguiente` | int. Próximo folio a asignar; empieza en 1. La transacción `asignarFolioCarta()` / `asignarFolioAcuse()` lo lee, devuelve el folio con 5 dígitos y lo sube en 1. |
+
+Son secuencias INDEPENDIENTES: el folio de la Carta y el del Acuse
+no se mezclan. El folio se asigna AL ABRIR el formulario (no al
+guardar); si se abandona sin guardar, queda consumido (hueco en la
+numeración). Los documentos `acuses/{id}` y `cartas/{id}` llevan el
+folio en el campo `folio` (string de 5 dígitos). Las reglas son
+espejo de `config/folios`: solo subir de uno en uno y solo ese campo.
+
+⚠️ Las reglas de `acuses`, `cartas`, `config/foliosCarta` y
+`config/foliosAcuse` (desde 2.5.16) siguen sin publicarse: Gerardo
+las pega en la consola de Firebase antes de que el guardado en la
+nube funcione.
+
 ## `config/ai` — claves de IA
 
 | Campo | Tipo / valor |

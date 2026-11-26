@@ -5,6 +5,53 @@ del proyecto (memoria 2026-11-12 a 2026-11-17) y las series de tests
 (`tests/test20*.js`). Las versiones 2.0.1–2.0.4 no tienen registro y
 no se documentan con supuestos.
 
+## 2.5.18 — 2026-11-25
+
+- **PDF de la Carta Responsiva: campos del solicitante ahora con
+  cajas con borde visible, como en la imagen de referencia
+  (FO-SI-10 en el visor PDF del teléfono).** Cada campo en su celda
+  con borde: a la izquierda Nombre, Número, Sucursal y Puesto en 4
+  cajas apiladas; a la derecha Ip de Red (caja de 2 filas de alto) y
+  «Área: Jefe Directo» (Área + Jefe Directo en una sola celda);
+  Observaciones como caja larga de ancho completo con borde.
+  Seguridad / Fecha / FOLIO ahora en una sola línea (como el
+  original) y títulos «DATOS DEL SOLICITANTE» y «Exclusivo de
+  Sistemas» centrados. La tabla «Exclusivo de Sistemas» se verificó
+  contra la imagen: verde #9BBB59 con sus divisores verticales.
+  Comparación visual del PDF generado (render a 130 dpi) contra la
+  imagen de referencia: coinciden encabezado, cajas, tabla verde y
+  NOMBRE Y FIRMA en p. 1; p. 2 con RESPONSABILIDADES intacta. El
+  Acuse se re-verificó con el mismo criterio: PARA / DE / ANEXO sin
+  borde (así es el formato original) y tabla RECIBE con bordes.
+  «Rosa Blanca» en Sucursal es solo el ejemplo de la imagen, no se
+  prellena.
+- **Folio automático AL ABRIR en ambas formas.** La Carta ya no
+  asigna el folio al guardar: al abrir el formulario ya trae su
+  folio (misma transacción, `config/foliosCarta`). El Acuse ahora
+  tiene folio: nueva secuencia independiente con transacción de
+  Firestore (`config/foliosAcuse`); se ve en el formulario (campo
+  de solo lectura) y en el PDF, arriba a la derecha bajo la fecha.
+  Si el formulario se abandona sin guardar, el folio queda
+  consumido (hueco en la numeración) — comportamiento normal de
+  folios, sin lógica de devolución. El folio se muestra en las
+  tarjetas de guardados, en los textos de WhatsApp/correo y en los
+  avisos («Acuse guardado con folio …» / «Carta guardada con folio
+  …»).
+- **firestore.rules con el contador nuevo.** Regla
+  `config/foliosAcuse` (espejo de `foliosCarta`). ⚠️ El archivo de
+  reglas que se entrega incluye TODO (acuses, cartas, ambos
+  contadores) porque **Gerardo todavía NO ha pegado las reglas de
+  2.5.16 en la consola**: el guardado en nube sigue dando
+  `permission denied` hasta pegarlas.
+- Tests `tests/test20268.js`: **952 true / 0 false** (serie 268;
+  nuevas 268A–268F: cajas con borde en el PDF de la Carta, folio al
+  abrir en ambas formas, secuencias independientes, folio consumido
+  al abandonar, regla del contador nuevo). Bundle de Firebase
+  reconstruido, md5 `9d4f0a81f3108d0f92f50f08fc48c752`. APK
+  versionCode 72, 15,810,673 B, md5
+  `4d2ba438c6758f08e4a24b644454068d`, firma permanente verificada
+  con apksigner.
+
 ## 2.5.17 — 2026-11-25
 
 - **PDF del Acuse Sistemas corregido para verse IGUAL que el formato
